@@ -12,9 +12,13 @@
   input,button{padding:.5rem;border-radius:6px;border:1px solid #d1d5db;background:white}
   .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
   .card{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(2,6,23,0.06)}
-  .list-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f0f0f0}
+  .list-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f0f0f0;align-items:center}
   .small-widgets{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
   .widget{flex:1;min-width:140px;padding:.6rem;border-radius:8px;background:#f8fafc;border:1px solid #e6eef7;text-align:center}
+  .items-list{margin-top:.5rem;padding:0 0 0 .5rem;max-height:260px;overflow:auto}
+  .items-list li{padding:.2rem 0;border-bottom:1px dashed #eee;font-size:.95rem}
+  details summary{cursor:pointer;padding:.4rem 0;list-style:none;outline:none}
+  .subtitle{font-size:.85rem;color:#666}
   table{width:100%;border-collapse:collapse;margin-top:6px}
   th,td{padding:6px;border-bottom:1px solid #eee;text-align:left;font-size:.95rem}
   #error{color:#b91c1c;margin-top:8px}
@@ -46,10 +50,25 @@
       <h3 style="margin:.2rem 0">Resumen del día</h3>
       <div id="dayList">
         <!-- Aquí se renderiza la lista -->
-        <div class="list-row"><strong>dia</strong><span>—</span></div>
-        <div class="list-row"><strong>total</strong><span>—</span></div>
-        <div class="list-row"><strong>pedidos</strong><span>—</span></div>
-        <div class="list-row"><strong>productos vendidos</strong><span>—</span></div>
+        <div class="list-row"><strong>dia</strong><span class="subtitle">—</span></div>
+        <div class="list-row"><strong>total</strong><span class="subtitle">—</span></div>
+        <div class="list-row"><strong>pedidos</strong><span class="subtitle">—</span></div>
+
+        <!-- Productos vendidos: suma + details (oculto por defecto) -->
+        <div id="prodRow" class="list-row" style="flex-direction:column;align-items:stretch">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>productos vendidos</strong>
+            <span id="prodTotal" class="subtitle">—</span>
+          </div>
+
+          <details id="prodDetails" style="margin-top:6px">
+            <summary style="font-size:.95rem;color:#0f172a">Ver productos (clic para mostrar/ocultar)</summary>
+            <div class="items-list">
+              <ol id="itemsList" style="margin:0;padding-left:1rem"></ol>
+            </div>
+          </details>
+        </div>
+
       </div>
 
       <div class="small-widgets" style="margin-top:8px">
@@ -71,7 +90,7 @@
       <canvas id="chartOrders" style="width:100%;height:150px;margin-top:12px"></canvas>
     </div>
 
-    <!-- Orders by method/mode removed from list per request; show top items -->
+    <!-- Top items -->
     <div class="card" style="grid-column:1 / -1">
       <h3 style="margin:.2rem 0">Top productos (día seleccionado)</h3>
       <canvas id="chartItems" style="width:100%;height:260px"></canvas>
@@ -83,6 +102,8 @@
 <script>
 const elErr = document.getElementById('error');
 const dayList = document.getElementById('dayList');
+const prodTotalEl = document.getElementById('prodTotal');
+const itemsListEl = document.getElementById('itemsList');
 const wEfectivo = document.getElementById('wEfectivo');
 const wTransfer = document.getElementById('wTransfer');
 const autoChk = document.getElementById('auto');
@@ -110,12 +131,29 @@ function sumItemsCount(itemsMap) {
 }
 
 function safeMethodValue(map, keyVariants) {
-  // keyVariants: array de posibles claves que representen la misma cosa
   if (!map || typeof map !== 'object') return 0;
   for (const k of keyVariants) {
     if (Object.prototype.hasOwnProperty.call(map, k)) return Number(map[k]||0);
   }
   return 0;
+}
+
+function renderItemsList(itemsMap, limit = 50) {
+  itemsListEl.innerHTML = '';
+  if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
+    const li = document.createElement('li');
+    li.textContent = 'No hay productos registrados';
+    itemsListEl.appendChild(li);
+    return;
+  }
+
+  // Ordenar por cantidad descendente
+  const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
+  for (const [name, qty] of entries) {
+    const li = document.createElement('li');
+    li.innerHTML = `<strong>${name}</strong> — <span style="float:right">${qty}</span>`;
+    itemsListEl.appendChild(li);
+  }
 }
 
 async function loadData() {
@@ -137,25 +175,33 @@ async function loadData() {
     const productosVendidos = sumItemsCount(data.itemsCount);
 
     // revenueByMethod: dividir en efectivo y transferencia
-    // aceptamos variantes: 'efectivo', 'efec', 'transferencia', 'trans', etc.
     const rb = data.revenueByMethod || {};
     const efectivo = safeMethodValue(rb, ['efectivo','efec','efecivo','cash']);
     const transferencia = safeMethodValue(rb, ['transferencia','trans','transfer']);
 
-    // render lista (limpia y muestra)
-    dayList.innerHTML = '';
+    // Render lista principal (valores traducidos)
+    // dia, total, pedidos
+    // productos vendidos: suma + detalle oculto (items)
+    // reemplazamos contenido de dayList por filas (excepto details que ya existe)
+    // actualizamos primeras 3 filas y luego la fila de productos
+    // Para simplicidad, actualizamos todo:
+    dayList.querySelectorAll('.list-row').forEach(n=>n.remove()); // limpiar
     const rows = [
-      ['dia', dia],
+      ['dia', dia || ''],
       ['total', `$${total}`],
       ['pedidos', pedidos],
-      ['productos vendidos', productosVendidos],
     ];
     for (const [label, val] of rows) {
       const div = document.createElement('div');
       div.className = 'list-row';
-      div.innerHTML = `<strong>${label}</strong><span>${val}</span>`;
-      dayList.appendChild(div);
+      div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
+      dayList.insertBefore(div, document.getElementById('prodRow'));
     }
+    // productos vendidos total
+    prodTotalEl.textContent = productosVendidos;
+
+    // items list (detallada dentro del details)
+    renderItemsList(data.itemsCount || {});
 
     // widgets
     wEfectivo.textContent = `$${efectivo}`;
@@ -169,6 +215,10 @@ async function loadData() {
     // Rango 7 días
     await loadRangeAndRender(7);
 
+    // Si el detalle estaba vacío, cerramos el details por defecto
+    const prodDetails = document.getElementById('prodDetails');
+    if (entries.length === 0) prodDetails.removeAttribute('open');
+
   } catch (err) {
     elErr.textContent = 'Error: ' + (err?.message || err);
     console.error(err);
@@ -179,7 +229,7 @@ async function loadRangeAndRender(days=7) {
   try {
     const res = await fetch(`/api/daily-range?days=${days}`);
     if (!res.ok) throw new Error('Range API ' + res.status);
-    const arr = await res.json(); // array [{day,revenue,ordersCount,revenueByMethod,...},...]
+    const arr = await res.json();
     const labels = arr.map(r => r.day);
     const revenues = arr.map(r => r.revenue);
     const orders = arr.map(r => r.ordersCount);
@@ -226,13 +276,12 @@ async function exportCsv() {
     let csv = 'dia,total,pedidos\n';
     for (const r of range) csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
 
-    // Detalle día (nuevos labels)
+    // Detalle día: productos (lista) + efectivo/transferencia
     if (detail) {
-      // calcular efectivo/transferencia como en UI
+      const productosVendidos = sumItemsCount(detail.itemsCount || {});
       const rb = detail.revenueByMethod || {};
       const efectivo = safeMethodValue(rb, ['efectivo','efec','efecivo','cash']);
       const transferencia = safeMethodValue(rb, ['transferencia','trans','transfer']);
-      const productosVendidos = sumItemsCount(detail.itemsCount || {});
 
       csv += '\nDETALLE_DIA\n';
       csv += `dia,${detail.day || day}\n`;
@@ -241,6 +290,10 @@ async function exportCsv() {
       csv += `productos vendidos,${productosVendidos}\n`;
       csv += `efectivo,${efectivo}\n`;
       csv += `transferencia,${transferencia}\n`;
+
+      csv += '\nProductos (nombre,cantidad)\n';
+      const items = detail.itemsCount || {};
+      for (const [k,v] of Object.entries(items)) csv += `"${k.replace(/"/g,'""')}",${v}\n';
     }
 
     const blob = new Blob([csv], {type:'text/csv'});
@@ -253,6 +306,20 @@ async function exportCsv() {
     console.error(e);
   }
 }
+
+// helper used by exportCsv
+function sumItemsCount(itemsMap) {
+  if (!itemsMap || typeof itemsMap !== 'object') return 0;
+  return Object.values(itemsMap).reduce((s,v)=>s + (Number(v)||0), 0);
+}
+function safeMethodValue(map, keyVariants) {
+  if (!map || typeof map !== 'object') return 0;
+  for (const k of keyVariants) {
+    if (Object.prototype.hasOwnProperty.call(map, k)) return Number(map[k]||0);
+  }
+  return 0;
+}
+
 </script>
 </body>
 </html>
