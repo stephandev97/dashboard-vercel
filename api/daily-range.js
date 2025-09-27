@@ -2,12 +2,12 @@
 import { getDailyStatRecordSmart } from "../stats.js";
 
 function formatDay(d) {
-  return d.toISOString().slice(0,10);
+  return d.toISOString().slice(0, 10);
 }
 
 export default async function handler(req, res) {
   try {
-    const days = Math.min(30, Number(req.query.days || 7)); // cap 30
+    const days = Math.min(30, Number(req.query.days || 7));
     const end = new Date();
     const out = [];
 
@@ -21,11 +21,11 @@ export default async function handler(req, res) {
           day: key,
           revenue: rec ? Number(rec.revenue || 0) : 0,
           ordersCount: rec ? Number(rec.ordersCount || 0) : 0,
-          itemsCount: rec ? rec.itemsCount || {} : {},
+          revenueByMethod: rec ? (rec.revenueByMethod || {}) : {},
+          ordersByMethod: rec ? (rec.ordersByMethod || {}) : {},
         });
       } catch (err) {
-        // en caso de error puntual, empujamos 0 para que no rompa todo
-        out.push({ day: key, revenue: 0, ordersCount: 0, itemsCount: {} });
+        out.push({ day: key, revenue: 0, ordersCount: 0, revenueByMethod: {}, ordersByMethod: {} });
       }
     }
 

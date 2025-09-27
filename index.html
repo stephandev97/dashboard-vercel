@@ -52,6 +52,17 @@
       <canvas id="chartOrders" style="width:100%;height:150px;margin-top:12px"></canvas>
     </div>
 
+    <div class="card">
+      <h3 style="margin:.2rem 0">Revenue por método (día seleccionado)</h3>
+      <canvas id="chartRevenueByMethod" style="width:100%;height:200px"></canvas>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:.2rem 0">Órdenes por método / modo (día)</h3>
+      <canvas id="chartOrdersByMethod" style="width:100%;height:200px"></canvas>
+      <canvas id="chartOrdersByMode" style="width:100%;height:140px;margin-top:12px"></canvas>
+    </div>
+
     <div class="card" style="grid-column:1 / -1">
       <h3 style="margin:.2rem 0">Top items (día seleccionado)</h3>
       <canvas id="chartItems" style="width:100%;height:260px"></canvas>
@@ -67,6 +78,7 @@ const tbBody = document.getElementById('statsBody');
 const autoChk = document.getElementById('auto');
 
 let chartRev=null, chartOrders=null, chartItems=null;
+let chartRevenueByMethod=null, chartOrdersByMethod=null, chartOrdersByMode=null;
 let autoTimer = null;
 
 document.getElementById('btnLoad').addEventListener('click', loadData);
@@ -98,6 +110,8 @@ async function loadData() {
       throw new Error(`${res.status} ${text}`);
     }
     const data = await res.json();
+
+    // tabla detalle
     for (const [k,v] of Object.entries(data)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${k}</td><td style="white-space:pre-wrap">${JSON.stringify(v,null,2)}</td>`;
@@ -105,7 +119,12 @@ async function loadData() {
     }
     tb.style.display = '';
 
-    // 2) top items chart
+    // charts día: revenueByMethod, ordersByMethod, ordersByMode
+    renderRevenueByMethodChart(data.revenueByMethod || {});
+    renderOrdersByMethodChart(data.ordersByMethod || {});
+    renderOrdersByModeChart(data.ordersByMode || {});
+
+    // top items chart
     const items = data.itemsCount || {};
     const entries = Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,10);
     renderItemsChart(entries);
@@ -122,12 +141,11 @@ async function loadRangeAndRender(days=7) {
   try {
     const res = await fetch(`/api/daily-range?days=${days}`);
     if (!res.ok) throw new Error('Range API ' + res.status);
-    const arr = await res.json(); // array [{day,revenue,ordersCount,itemsCount},...]
+    const arr = await res.json(); // array [{day,revenue,ordersCount,revenueByMethod,ordersByMethod},...]
     const labels = arr.map(r => r.day);
     const revenues = arr.map(r => r.revenue);
     const orders = arr.map(r => r.ordersCount);
 
-    // Revenue chart
     if (chartRev) chartRev.destroy();
     chartRev = new Chart(document.getElementById('chartRev').getContext('2d'), {
       type: 'line',
@@ -135,7 +153,6 @@ async function loadRangeAndRender(days=7) {
       options: { plugins:{legend:{display:false}}, responsive:true }
     });
 
-    // Orders chart
     if (chartOrders) chartOrders.destroy();
     chartOrders = new Chart(document.getElementById('chartOrders').getContext('2d'), {
       type: 'bar',
@@ -143,10 +160,23 @@ async function loadRangeAndRender(days=7) {
       options: { plugins:{legend:{display:false}}, responsive:true }
     });
 
+    // Opcional: mostrar tendencia por método (sumar por método en el rango)
+    // Construimos map totalRevenueByMethod sobre el rango (para info rápida)
+    const totalRevByMethod = {};
+    for (const r of arr) {
+      const rb = r.revenueByMethod || {};
+      for (const k of Object.keys(rb)) totalRevByMethod[k] = (totalRevByMethod[k]||0) + Number(rb[k]||0);
+    }
+    // Si no hay chartRevenueByMethod global, mostrar el acumulado último 7 días en el pie (si querés)
+    // (Aquí lo dejamos como info en consola)
+    console.log('Total revenue by method (últimos '+days+' días):', totalRevByMethod);
+
   } catch (e) {
     console.warn('No se pudo cargar rango:', e);
   }
 }
+
+/* ========= RENDER CHART HELPERS ========= */
 
 function renderItemsChart(entries) {
   const labels = entries.map(e=>e[0]);
@@ -159,30 +189,80 @@ function renderItemsChart(entries) {
   });
 }
 
-function exportCsv() {
-  // export current 7 day range + day detail
-  Promise.all([
-    fetch('/api/daily-range?days=7').then(r=>r.ok? r.json(): Promise.reject(r.status)),
-    (async ()=>{
-      const day = document.getElementById('day').value;
-      const r = await fetch('/api/daily' + (day? '?day='+day : ''));
-      return r.ok ? r.json() : null;
-    })()
-  ]).then(([range, detail])=>{
+function renderRevenueByMethodChart(map) {
+  const entries = Object.entries(map || {}).sort((a,b)=>b[1]-a[1]);
+  const labels = entries.map(e=>e[0]);
+  const values = entries.map(e=>e[1]);
+  if (chartRevenueByMethod) chartRevenueByMethod.destroy();
+  chartRevenueByMethod = new Chart(document.getElementById('chartRevenueByMethod').getContext('2d'), {
+    type: 'pie',
+    data: { labels, datasets: [{ data: values }] },
+    options: { plugins:{legend:{position:'bottom'}}, responsive:true }
+  });
+}
+
+function renderOrdersByMethodChart(map) {
+  const entries = Object.entries(map || {}).sort((a,b)=>b[1]-a[1]);
+  const labels = entries.map(e=>e[0]);
+  const values = entries.map(e=>e[1]);
+  if (chartOrdersByMethod) chartOrdersByMethod.destroy();
+  chartOrdersByMethod = new Chart(document.getElementById('chartOrdersByMethod').getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Órdenes', data: values }] },
+    options: { plugins:{legend:{display:false}}, responsive:true }
+  });
+}
+
+function renderOrdersByModeChart(map) {
+  const entries = Object.entries(map || {}).sort((a,b)=>b[1]-a[1]);
+  const labels = entries.map(e=>e[0]);
+  const values = entries.map(e=>e[1]);
+  if (chartOrdersByMode) chartOrdersByMode.destroy();
+  chartOrdersByMode = new Chart(document.getElementById('chartOrdersByMode').getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Órdenes por modo', data: values }] },
+    options: { plugins:{legend:{display:false}}, responsive:true }
+  });
+}
+
+/* ========= EXPORT CSV (incluye nuevos campos) ========= */
+async function exportCsv() {
+  try {
+    const [range, detail] = await Promise.all([
+      fetch('/api/daily-range?days=7').then(r=>r.ok?r.json(): Promise.reject(r.status)),
+      (async ()=>{
+        const day = document.getElementById('day').value;
+        const r = await fetch('/api/daily' + (day? '?day='+day : ''));
+        return r.ok ? r.json() : null;
+      })()
+    ]);
+
+    // CSV principal: days
     let csv = 'day,revenue,ordersCount\n';
     for (const r of range) csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
+
+    // Añadimos por día los revenueByMethod (columns dinámicas)
+    csv += '\nRevenueByMethod (per day JSON)\n';
+    for (const r of range) csv += `${r.day},${JSON.stringify(r.revenueByMethod)}\n`;
+
     if (detail) {
       csv += '\nDETAIL_DAY,' + (detail.day||'') + '\n';
-      for (const [k,v] of Object.entries(detail)) {
-        csv += `${k},${JSON.stringify(v)}\n`;
-      }
+      csv += `revenue,${detail.revenue}\nordersCount,${detail.ordersCount}\n`;
+      csv += 'revenueByMethod,' + JSON.stringify(detail.revenueByMethod) + '\n';
+      csv += 'ordersByMethod,' + JSON.stringify(detail.ordersByMethod) + '\n';
+      csv += 'ordersByMode,' + JSON.stringify(detail.ordersByMode) + '\n';
     }
+
     const blob = new Blob([csv], {type:'text/csv'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'daily_stats_export.csv'; document.body.appendChild(a); a.click();
     a.remove(); URL.revokeObjectURL(url);
-  }).catch(e=>{ alert('Error exportando CSV: '+e); console.error(e); });
+
+  } catch (e) {
+    alert('Error exportando CSV: '+e);
+    console.error(e);
+  }
 }
 
 </script>
