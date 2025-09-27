@@ -293,7 +293,11 @@ async function exportCsv() {
 
       csv += '\nProductos (nombre,cantidad)\n';
       const items = detail.itemsCount || {};
-      for (const [k,v] of Object.entries(items)) csv += `"${k.replace(/"/g,'""')}",${v}\n';
+      for (const [k,v] of Object.entries(items)) {
+        // escapamos comillas dobles según CSV
+        const name = `"${String(k).replace(/"/g,'""')}"`;
+        csv += `${name},${v}\n`;
+      }
     }
 
     const blob = new Blob([csv], {type:'text/csv'});
@@ -305,19 +309,6 @@ async function exportCsv() {
     alert('Error exportando CSV: '+e);
     console.error(e);
   }
-}
-
-// helper used by exportCsv
-function sumItemsCount(itemsMap) {
-  if (!itemsMap || typeof itemsMap !== 'object') return 0;
-  return Object.values(itemsMap).reduce((s,v)=>s + (Number(v)||0), 0);
-}
-function safeMethodValue(map, keyVariants) {
-  if (!map || typeof map !== 'object') return 0;
-  for (const k of keyVariants) {
-    if (Object.prototype.hasOwnProperty.call(map, k)) return Number(map[k]||0);
-  }
-  return 0;
 }
 
 </script>
