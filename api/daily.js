@@ -1,5 +1,5 @@
-import { getDailyStatRecordSmart } from '../../stats.js';
-import { pb } from '../../lib/pb.js';
+import { getDailyStatRecordSmart } from '../stats.js';
+import { pb } from '../lib/pb.js';
 
 export default async function handler(req, res) {
   try {
