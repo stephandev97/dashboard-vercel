@@ -1,4 +1,4 @@
-import { getDailyStatRecordSmart } from '../../stats.js';
+import { getDailyStatRecordSmart } from '../stats.js';
 import PocketBase from 'pocketbase';
 
 const pb = new PocketBase(process.env.PB_URL);
