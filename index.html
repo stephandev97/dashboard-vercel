@@ -22,6 +22,13 @@
   table{width:100%;border-collapse:collapse;margin-top:6px}
   th,td{padding:6px;border-bottom:1px solid #eee;text-align:left;font-size:.95rem}
   #error{color:#b91c1c;margin-top:8px}
+
+  /* Top items horizontal chips */
+  .top-items-row{display:flex;gap:.5rem;overflow:auto;padding-top:.75rem;padding-bottom:.25rem}
+  .chip{white-space:nowrap;display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .6rem;border-radius:999px;background:#eef2ff;border:1px solid #dbeafe;font-size:.9rem}
+  .chip b{font-weight:700;margin-right:.3rem}
+  .chip .qty{background:#fff;padding:.15rem .45rem;border-radius:6px;border:1px solid #e6eef7;margin-left:.25rem;font-weight:600}
+
   @media(min-width:900px){ .grid{grid-template-columns:1fr 1fr} }
 </style>
 </head>
@@ -45,30 +52,24 @@
   <div id="error"></div>
 
   <div class="grid">
-    <!-- Listado principal (en vez de JSON) -->
+    <!-- Resumen del día -->
     <div class="card" id="cardDay">
       <h3 style="margin:.2rem 0">Resumen del día</h3>
       <div id="dayList">
-        <!-- Aquí se renderiza la lista -->
-        <div class="list-row"><strong>dia</strong><span class="subtitle">—</span></div>
-        <div class="list-row"><strong>total</strong><span class="subtitle">—</span></div>
-        <div class="list-row"><strong>pedidos</strong><span class="subtitle">—</span></div>
+        <!-- filas serán insertadas dinámicamente -->
+      </div>
 
-        <!-- Productos vendidos: suma + details (oculto por defecto) -->
-        <div id="prodRow" class="list-row" style="flex-direction:column;align-items:stretch">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>productos vendidos</strong>
-            <span id="prodTotal" class="subtitle">—</span>
+      <!-- Top items row (chips) aparece justo debajo de 'pedidos' visualmente -->
+      <div id="topItemsRow" class="top-items-row" aria-hidden="false"></div>
+
+      <!-- Productos vendidos: suma + detalle oculto -->
+      <div style="margin-top:10px">
+        <details id="prodDetails">
+          <summary style="font-size:.95rem;color:#0f172a">Ver productos (clic para mostrar/ocultar)</summary>
+          <div class="items-list">
+            <ol id="itemsList" style="margin:0;padding-left:1rem"></ol>
           </div>
-
-          <details id="prodDetails" style="margin-top:6px">
-            <summary style="font-size:.95rem;color:#0f172a">Ver productos (clic para mostrar/ocultar)</summary>
-            <div class="items-list">
-              <ol id="itemsList" style="margin:0;padding-left:1rem"></ol>
-            </div>
-          </details>
-        </div>
-
+        </details>
       </div>
 
       <div class="small-widgets" style="margin-top:8px">
@@ -90,11 +91,7 @@
       <canvas id="chartOrders" style="width:100%;height:150px;margin-top:12px"></canvas>
     </div>
 
-    <!-- Top items -->
-    <div class="card" style="grid-column:1 / -1">
-      <h3 style="margin:.2rem 0">Top productos (día seleccionado)</h3>
-      <canvas id="chartItems" style="width:100%;height:260px"></canvas>
-    </div>
+    <!-- removido gráfico de top items -->
   </div>
 </div>
 
@@ -102,13 +99,14 @@
 <script>
 const elErr = document.getElementById('error');
 const dayList = document.getElementById('dayList');
-const prodTotalEl = document.getElementById('prodTotal');
+const prodTotalEl = document.getElementById('prodDetails'); // details element
 const itemsListEl = document.getElementById('itemsList');
+const topItemsRow = document.getElementById('topItemsRow');
 const wEfectivo = document.getElementById('wEfectivo');
 const wTransfer = document.getElementById('wTransfer');
 const autoChk = document.getElementById('auto');
 
-let chartRev=null, chartOrders=null, chartItems=null;
+let chartRev=null, chartOrders=null;
 let autoTimer = null;
 
 document.getElementById('btnLoad').addEventListener('click', loadData);
@@ -125,11 +123,11 @@ autoChk.addEventListener('change', () => {
 });
 document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
+/* ======= HELPERS ======= */
 function sumItemsCount(itemsMap) {
   if (!itemsMap || typeof itemsMap !== 'object') return 0;
   return Object.values(itemsMap).reduce((s,v)=>s + (Number(v)||0), 0);
 }
-
 function safeMethodValue(map, keyVariants) {
   if (!map || typeof map !== 'object') return 0;
   for (const k of keyVariants) {
@@ -138,26 +136,54 @@ function safeMethodValue(map, keyVariants) {
   return 0;
 }
 
-function renderItemsList(itemsMap, limit = 50) {
-  itemsListEl.innerHTML = '';
+/* Render chips row for top items */
+function renderTopItemsRow(itemsMap, limit = 20) {
+  topItemsRow.innerHTML = '';
   if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
-    const li = document.createElement('li');
-    li.textContent = 'No hay productos registrados';
-    itemsListEl.appendChild(li);
+    const span = document.createElement('span');
+    span.className = 'subtitle';
+    span.textContent = 'No hay productos';
+    topItemsRow.appendChild(span);
     return;
   }
+  const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
+  for (const [name, qty] of entries) {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `<span style="font-size:.95rem">${escapeHtml(name)}</span><span class="qty">${qty}</span>`;
+    topItemsRow.appendChild(chip);
+  }
+}
 
-  // Ordenar por cantidad descendente
+/* Render detailed vertical list inside details */
+function renderItemsList(itemsMap, limit = 200) {
+  itemsListEl.innerHTML = '';
+  if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
+    const li = document.createElement('li'); li.textContent = 'No hay productos registrados'; itemsListEl.appendChild(li); return;
+  }
   const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
   for (const [name, qty] of entries) {
     const li = document.createElement('li');
-    li.innerHTML = `<strong>${name}</strong> — <span style="float:right">${qty}</span>`;
+    li.innerHTML = `<strong>${escapeHtml(name)}</strong> — <span style="float:right">${qty}</span>`;
     itemsListEl.appendChild(li);
   }
 }
 
+/* simple HTML escaper for inserted names */
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
+}
+
+/* ======= Main load function ======= */
 async function loadData() {
   elErr.textContent = '';
+  dayList.innerHTML = '';
+
   const day = document.getElementById('day').value;
   const url = '/api/daily' + (day ? '?day=' + day : '');
   try {
@@ -172,52 +198,39 @@ async function loadData() {
     const dia = data.day || '';
     const total = Number(data.revenue || 0);
     const pedidos = Number(data.ordersCount || 0);
-    const productosVendidos = sumItemsCount(data.itemsCount);
+    const productosVendidos = sumItemsCount(data.itemsCount || {});
 
     // revenueByMethod: dividir en efectivo y transferencia
     const rb = data.revenueByMethod || {};
     const efectivo = safeMethodValue(rb, ['efectivo','efec','efecivo','cash']);
     const transferencia = safeMethodValue(rb, ['transferencia','trans','transfer']);
 
-    // Render lista principal (valores traducidos)
-    // dia, total, pedidos
-    // productos vendidos: suma + detalle oculto (items)
-    // reemplazamos contenido de dayList por filas (excepto details que ya existe)
-    // actualizamos primeras 3 filas y luego la fila de productos
-    // Para simplicidad, actualizamos todo:
-    dayList.querySelectorAll('.list-row').forEach(n=>n.remove()); // limpiar
+    // Render filas (dia, total, pedidos, productos vendidos)
     const rows = [
       ['dia', dia || ''],
       ['total', `$${total}`],
       ['pedidos', pedidos],
+      ['productos vendidos', productosVendidos]
     ];
     for (const [label, val] of rows) {
       const div = document.createElement('div');
       div.className = 'list-row';
       div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
-      dayList.insertBefore(div, document.getElementById('prodRow'));
+      dayList.appendChild(div);
     }
-    // productos vendidos total
-    prodTotalEl.textContent = productosVendidos;
 
-    // items list (detallada dentro del details)
-    renderItemsList(data.itemsCount || {});
+    // Top items row (chips) placed under 'pedidos' visually:
+    renderTopItemsRow(data.itemsCount || {}, 20);
+
+    // Detailed list inside details:
+    renderItemsList(data.itemsCount || {}, 200);
 
     // widgets
     wEfectivo.textContent = `$${efectivo}`;
     wTransfer.textContent = `$${transferencia}`;
 
-    // Top items chart
-    const items = data.itemsCount || {};
-    const entries = Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    renderItemsChart(entries);
-
-    // Rango 7 días
+    // Rango 7 días charts
     await loadRangeAndRender(7);
-
-    // Si el detalle estaba vacío, cerramos el details por defecto
-    const prodDetails = document.getElementById('prodDetails');
-    if (entries.length === 0) prodDetails.removeAttribute('open');
 
   } catch (err) {
     elErr.textContent = 'Error: ' + (err?.message || err);
@@ -225,6 +238,7 @@ async function loadData() {
   }
 }
 
+/* ======= Range charts (same as before) ======= */
 async function loadRangeAndRender(days=7) {
   try {
     const res = await fetch(`/api/daily-range?days=${days}`);
@@ -253,17 +267,7 @@ async function loadRangeAndRender(days=7) {
   }
 }
 
-function renderItemsChart(entries) {
-  const labels = entries.map(e=>e[0]);
-  const values = entries.map(e=>e[1]);
-  if (chartItems) chartItems.destroy();
-  chartItems = new Chart(document.getElementById('chartItems').getContext('2d'), {
-    type: 'bar',
-    data: { labels, datasets: [{ label:'productos vendidos', data:values }] },
-    options: { indexAxis:'y', plugins:{legend:{display:false}}, responsive:true }
-  });
-}
-
+/* ======= CSV export (incluye detalle de productos) ======= */
 async function exportCsv() {
   try {
     const day = document.getElementById('day').value || new Date().toISOString().slice(0,10);
@@ -294,7 +298,6 @@ async function exportCsv() {
       csv += '\nProductos (nombre,cantidad)\n';
       const items = detail.itemsCount || {};
       for (const [k,v] of Object.entries(items)) {
-        // escapamos comillas dobles según CSV
         const name = `"${String(k).replace(/"/g,'""')}"`;
         csv += `${name},${v}\n`;
       }
