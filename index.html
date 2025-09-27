@@ -30,33 +30,38 @@ canvas { margin-top:2rem; width:100% !important; height:300px !important; }
 
 <script>
 async function loadData() {
-  const res = await fetch('/api/daily');
-  if (!res.ok) return document.getElementById('summary').innerText = 'No hay datos hoy';
-  const data = await res.json();
+  try {
+    const res = await fetch(window.location.origin + '/api/daily');
+    if (!res.ok) throw new Error(`Error: ${res.status}`);
+    const data = await res.json();
 
-  // Resumen
-  document.getElementById('summary').innerHTML = `<p>Revenue: $${data.revenue}</p>
-    <p>Órdenes: ${data.ordersCount}</p>`;
+    // Resumen
+    document.getElementById('summary').innerHTML = `<p>Revenue: $${data.revenue}</p>
+      <p>Órdenes: ${data.ordersCount}</p>`;
 
-  // Tabla
-  const tbody = document.querySelector('#items-table tbody');
-  const items = data.itemsCount || {};
-  Object.keys(items).forEach(k => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${k}</td><td>${items[k]}</td>`;
-    tbody.appendChild(row);
-  });
+    // Tabla
+    const tbody = document.querySelector('#items-table tbody');
+    const items = data.itemsCount || {};
+    Object.keys(items).forEach(k => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${k}</td><td>${items[k]}</td>`;
+      tbody.appendChild(row);
+    });
 
-  // Gráfico
-  const ctx = document.getElementById('items-chart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(items),
-      datasets: [{ label:'Cantidad', data:Object.values(items), backgroundColor:'#4CAF50' }]
-    },
-    options: { responsive:true, plugins:{legend:{display:false}} }
-  });
+    // Gráfico
+    const ctx = document.getElementById('items-chart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(items),
+        datasets: [{ label:'Cantidad', data:Object.values(items), backgroundColor:'#4CAF50' }]
+      },
+      options: { responsive:true, plugins:{legend:{display:false}} }
+    });
+  } catch (err) {
+    document.getElementById('summary').innerText = err.message;
+    console.error(err);
+  }
 }
 
 loadData();
