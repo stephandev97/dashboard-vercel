@@ -1,4 +1,4 @@
-import { pb } from './lib/pb';
+import { pb } from '/lib/pb';
 
 // YYYY-MM-DD local
 export function getLocalDateKey(d = new Date()) {
