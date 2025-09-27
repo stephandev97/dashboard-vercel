@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Diario</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial; margin:0; padding:0; background:#f5f5f5; }
+header { background:#4CAF50; color:white; padding:1rem; text-align:center; }
+.container { padding:1rem; }
+table { width:100%; border-collapse: collapse; margin-top:1rem; }
+th, td { border:1px solid #ccc; padding:0.5rem; text-align:left; }
+th { background:#eee; }
+canvas { margin-top:2rem; width:100% !important; height:300px !important; }
+</style>
+</head>
+<body>
+<header>
+<h1>Dashboard Diario</h1>
+</header>
+<div class="container">
+  <div id="summary"></div>
+  <table id="items-table">
+    <thead><tr><th>Item</th><th>Cantidad</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <canvas id="items-chart"></canvas>
+</div>
+
+<script>
+async function loadData() {
+  const res = await fetch('/api/daily');
+  if (!res.ok) return document.getElementById('summary').innerText = 'No hay datos hoy';
+  const data = await res.json();
+
+  // Resumen
+  document.getElementById('summary').innerHTML = `<p>Revenue: $${data.revenue}</p>
+    <p>Órdenes: ${data.ordersCount}</p>`;
+
+  // Tabla
+  const tbody = document.querySelector('#items-table tbody');
+  const items = data.itemsCount || {};
+  Object.keys(items).forEach(k => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${k}</td><td>${items[k]}</td>`;
+    tbody.appendChild(row);
+  });
+
+  // Gráfico
+  const ctx = document.getElementById('items-chart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(items),
+      datasets: [{ label:'Cantidad', data:Object.values(items), backgroundColor:'#4CAF50' }]
+    },
+    options: { responsive:true, plugins:{legend:{display:false}} }
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>
