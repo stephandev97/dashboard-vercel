@@ -110,9 +110,10 @@ details summary {
 .top-items-row {
     display: flex;
     gap: .5rem;
-    overflow: auto;
+    overflow-x: auto; /* Usar overflow-x para ser más específico */
     padding-top: .75rem;
     padding-bottom: .25rem;
+    width: 100%; /* Asegurar que ocupe el ancho del padre */
 }
 
 .chip {
