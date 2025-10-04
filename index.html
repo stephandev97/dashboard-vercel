@@ -72,10 +72,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Referencias a elementos del DOM
 const elErr = document.getElementById('error');
 const dayList = document.getElementById('dayList');
-const prodTotalEl = document.getElementById('prodDetails');
 const itemsListEl = document.getElementById('itemsList');
 const topItemsRow = document.getElementById('topItemsRow');
 const wEfectivo = document.getElementById('wEfectivo');
@@ -86,10 +84,18 @@ const ordersListContainer = document.getElementById('ordersListContainer');
 let chartRev=null, chartOrders=null;
 let autoTimer = null;
 
-// Event Listeners
+// --- FUNCIÓN HELPER ---
+// Obtiene la fecha LOCAL del usuario en formato YYYY-MM-DD
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 document.getElementById('btnLoad').addEventListener('click', loadData);
 document.getElementById('btnToday').addEventListener('click', () => {
-  document.getElementById('day').value = new Date().toISOString().slice(0,10);
+  document.getElementById('day').value = getLocalDateString();
   loadData();
 });
 autoChk.addEventListener('change', () => {
@@ -100,6 +106,13 @@ autoChk.addEventListener('change', () => {
   }
 });
 document.getElementById('exportCsv').addEventListener('click', exportCsv);
+
+// Carga los datos del día actual al abrir la página
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('day').value = getLocalDateString();
+  loadData();
+});
+
 
 /* ======= HELPERS ======= */
 function sumItemsCount(itemsMap) {
@@ -113,15 +126,20 @@ function safeMethodValue(map, keyVariants) {
   }
   return 0;
 }
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
+}
 
-/* Render chips row for top items */
+/* Render functions */
 function renderTopItemsRow(itemsMap, limit = 20) {
   topItemsRow.innerHTML = '';
   if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
-    const span = document.createElement('span');
-    span.className = 'subtitle';
-    span.textContent = 'No hay productos';
-    topItemsRow.appendChild(span);
+    topItemsRow.innerHTML = '<span class="subtitle">No hay productos</span>';
     return;
   }
   const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
@@ -132,12 +150,11 @@ function renderTopItemsRow(itemsMap, limit = 20) {
     topItemsRow.appendChild(chip);
   }
 }
-
-/* Render detailed vertical list inside details */
 function renderItemsList(itemsMap, limit = 200) {
   itemsListEl.innerHTML = '';
   if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
-    const li = document.createElement('li'); li.textContent = 'No hay productos registrados'; itemsListEl.appendChild(li); return;
+    itemsListEl.innerHTML = '<li>No hay productos registrados</li>';
+    return;
   }
   const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
   for (const [name, qty] of entries) {
@@ -147,67 +164,43 @@ function renderItemsList(itemsMap, limit = 200) {
   }
 }
 
-/* simple HTML escaper for inserted names */
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#39;');
-}
-
-/* ======= Renderizar lista de pedidos (CORREGIDA) ======= */
+// --- FUNCIÓN MODIFICADA ---
 function renderOrdersList(orders = []) {
-  ordersListContainer.innerHTML = ''; // Limpiar la lista anterior
+  ordersListContainer.innerHTML = '';
   if (!orders || orders.length === 0) {
     ordersListContainer.innerHTML = '<span class="subtitle">No hay pedidos para este día.</span>';
     return;
   }
-
   for (const order of orders) {
     const orderEl = document.createElement('div');
     orderEl.className = 'order-item';
-
-    // Formatear la hora
     const time = new Date(order.created).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
-    // Determinar el modo y la dirección
-    const mode = order.delivery_mode || 'No especificado';
-    let location = '';
-    if (mode.toLowerCase() === 'delivery' && order.delivery_address) {
-      location = escapeHtml(order.delivery_address);
-    } else if (mode.toLowerCase() === 'retiro') {
-      location = 'Retira en local';
-    }
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const direccion = order.direccion || 'No especificado';
+    let locationHtml = '';
 
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Crear la lista de productos para este pedido
+    // Revisa si el campo 'direccion' contiene la palabra "retiro"
+    if (direccion.toLowerCase().includes('retiro')) {
+      locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
+    } else {
+      locationHtml = `<span class="order-address is-delivery">${escapeHtml(direccion)}</span>`;
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
+
     let itemsHtml = '<ul class="order-products-list">';
-    // Verifica si `order.items` es un array (la causa del error [object Object])
     if (Array.isArray(order.items)) {
         for (const item of order.items) {
-            // Asumimos que cada 'item' es un objeto con 'name' y 'qty'
-            const name = item.name || 'Producto sin nombre';
-            const qty = item.qty || 1;
-            itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
+            itemsHtml += `<li>${escapeHtml(item.name || 'N/A')} <span class="qty">${item.qty || 1}</span></li>`;
         }
     } else if (order.items && typeof order.items === 'object') {
-        // Mantenemos la lógica anterior como fallback si 'items' es un objeto clave-valor
         for (const [name, qty] of Object.entries(order.items)) {
             itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
         }
     }
     itemsHtml += '</ul>';
-    // --- FIN DE LA CORRECCIÓN ---
 
-    orderEl.innerHTML = `
-      <div class="order-header">
-        <strong class="order-time">${time}hs</strong>
-        <span class="order-address">${location}</span>
-      </div>
-      ${itemsHtml}
-    `;
+    orderEl.innerHTML = `<div class="order-header"><strong class="order-time">${time}hs</strong>${locationHtml}</div>${itemsHtml}`;
     ordersListContainer.appendChild(orderEl);
   }
 }
@@ -216,10 +209,14 @@ function renderOrdersList(orders = []) {
 async function loadData() {
   elErr.textContent = '';
   dayList.innerHTML = '';
-  ordersListContainer.innerHTML = ''; // Limpiar pedidos al iniciar carga
+  ordersListContainer.innerHTML = '';
 
   const day = document.getElementById('day').value;
-  const url = '/api/daily' + (day ? '?day=' + day : '');
+  if (!day) {
+    elErr.textContent = 'Por favor, selecciona una fecha.';
+    return;
+  }
+  const url = '/api/daily?day=' + day;
   try {
     const res = await fetch(url);
     if (!res.ok) {
@@ -228,45 +225,26 @@ async function loadData() {
     }
     const data = await res.json();
 
-    // Mapear etiquetas y valores (lista)
-    const dia = data.day || '';
-    const total = Number(data.revenue || 0);
-    const pedidos = Number(data.ordersCount || 0);
-    const productosVendidos = sumItemsCount(data.itemsCount || {});
-
-    // revenueByMethod: dividir en efectivo y transferencia
-    const rb = data.revenueByMethod || {};
-    const efectivo = safeMethodValue(rb, ['efectivo','efec','efecivo','cash']);
-    const transferencia = safeMethodValue(rb, ['transferencia','trans','transfer']);
-
-    // Render filas (dia, total, pedidos, productos vendidos)
     const rows = [
-      ['dia', dia || ''],
-      ['total', `$${total}`],
-      ['pedidos', pedidos],
-      ['productos vendidos', productosVendidos]
+      ['dia', data.day || ''],
+      ['total', `$${Number(data.revenue || 0).toLocaleString('es-AR')}`],
+      ['pedidos', data.ordersCount || 0],
+      ['productos vendidos', sumItemsCount(data.itemsCount || {})]
     ];
-    for (const [label, val] of rows) {
+    rows.forEach(([label, val]) => {
       const div = document.createElement('div');
       div.className = 'list-row';
       div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
       dayList.appendChild(div);
-    }
+    });
 
-    // Top items row (chips)
+    const rb = data.revenueByMethod || {};
+    wEfectivo.textContent = `$${(safeMethodValue(rb, ['efectivo','efec','efecivo','cash'])).toLocaleString('es-AR')}`;
+    wTransfer.textContent = `$${(safeMethodValue(rb, ['transferencia','trans','transfer'])).toLocaleString('es-AR')}`;
+
     renderTopItemsRow(data.itemsCount || {}, 20);
-
-    // Detailed list inside details:
     renderItemsList(data.itemsCount || {}, 200);
-
-    // widgets
-    wEfectivo.textContent = `$${efectivo}`;
-    wTransfer.textContent = `$${transferencia}`;
-
-    // Renderizar la lista de pedidos detallados
     renderOrdersList(data.orders_detail);
-
-    // Rango 7 días charts
     await loadRangeAndRender(7);
 
   } catch (err) {
@@ -275,7 +253,7 @@ async function loadData() {
   }
 }
 
-/* ======= Range charts ======= */
+/* ======= Range charts (same as before) ======= */
 async function loadRangeAndRender(days=7) {
   try {
     const res = await fetch(`/api/daily-range?days=${days}`);
@@ -304,42 +282,30 @@ async function loadRangeAndRender(days=7) {
   }
 }
 
-/* ======= CSV export ======= */
+/* ======= CSV export (same as before) ======= */
 async function exportCsv() {
   try {
-    const day = document.getElementById('day').value || new Date().toISOString().slice(0,10);
+    const day = document.getElementById('day').value || getLocalDateString();
     const [range, detail] = await Promise.all([
       fetch('/api/daily-range?days=7').then(r=>r.ok?r.json(): Promise.reject(r.status)),
       fetch('/api/daily?day=' + day).then(r=>r.ok? r.json(): null)
     ]);
-
-    // CSV: primer bloque = últimos 7 días
     let csv = 'dia,total,pedidos\n';
-    for (const r of range) csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
-
-    // Detalle día
+    range.forEach(r => { csv += `${r.day},${r.revenue},${r.ordersCount}\n`; });
     if (detail) {
-      const productosVendidos = sumItemsCount(detail.itemsCount || {});
-      const rb = detail.revenueByMethod || {};
-      const efectivo = safeMethodValue(rb, ['efectivo','efec','efecivo','cash']);
-      const transferencia = safeMethodValue(rb, ['transferencia','trans','transfer']);
-
       csv += '\nDETALLE_DIA\n';
       csv += `dia,${detail.day || day}\n`;
       csv += `total,${detail.revenue}\n`;
       csv += `pedidos,${detail.ordersCount}\n`;
-      csv += `productos vendidos,${productosVendidos}\n`;
-      csv += `efectivo,${efectivo}\n`;
-      csv += `transferencia,${transferencia}\n`;
-
+      const rb = detail.revenueByMethod || {};
+      csv += `efectivo,${safeMethodValue(rb, ['efectivo','efec','efecivo','cash'])}\n`;
+      csv += `transferencia,${safeMethodValue(rb, ['transferencia','trans','transfer'])}\n`;
       csv += '\nProductos (nombre,cantidad)\n';
       const items = detail.itemsCount || {};
       for (const [k,v] of Object.entries(items)) {
-        const name = `"${String(k).replace(/"/g,'""')}"`;
-        csv += `${name},${v}\n`;
+        csv += `"${String(k).replace(/"/g,'""')}",${v}\n`;
       }
     }
-
     const blob = new Blob([csv], {type:'text/csv'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

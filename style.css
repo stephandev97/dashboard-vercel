@@ -210,3 +210,33 @@ details summary {
     padding: 0 .4rem;
     border-radius: 4px;
 }
+
+/* Al final de style.css */
+
+/* --- Estilos para Retiro vs Delivery --- */
+
+/* Estilo base para ambos, lo eliminamos para evitar conflictos */
+.order-address {
+    /* Puedes dejar propiedades comunes aquí si quieres, como el margen */
+    margin-left: auto; /* Empuja el elemento a la derecha */
+}
+
+/* Estilo para la etiqueta "Retiro" */
+.order-address.is-retiro {
+    font-weight: 700;
+    font-size: .8rem;
+    color: #4338ca; /* Un color violeta */
+    background-color: #eef2ff; /* Un fondo claro a juego */
+    padding: .2rem .6rem;
+    border-radius: 99px; /* Para hacerlo redondeado */
+    border: 1px solid #dbeafe;
+}
+
+/* Estilo para las direcciones de delivery */
+.order-address.is-delivery {
+    font-size: .85rem;
+    color: #475569; /* Un color gris oscuro */
+    font-weight: 500;
+    text-align: right;
+    max-width: 60%; /* Evita que la dirección sea demasiado ancha en móviles */
+}
