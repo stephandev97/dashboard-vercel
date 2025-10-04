@@ -10,7 +10,8 @@ export default async function handler(req, res) {
     let dailyRecord;
     try {
       dailyRecord = await getDailyStatRecordSmart({ dateKey });
-    } catch (err) {
+    } catch (err)
+    {
       console.error("Error getDailyStatRecordSmart:", err);
       return res.status(500).json({
         error: "Error al leer daily_stats",
@@ -19,25 +20,35 @@ export default async function handler(req, res) {
     }
 
     if (!dailyRecord) {
-      return res.status(404).json({ error: "No hay datos para este día", day: dateKey });
+      // Si no hay estadísticas, igual intentamos buscar pedidos por si acaso.
+      // Devolvemos un objeto base para que no falle el frontend.
+      dailyRecord = {
+        day: dateKey,
+        revenue: 0,
+        ordersCount: 0,
+        itemsCount: {},
+        paidByMethod: {},
+        revenueByMethod: {},
+        ordersByMethod: {},
+        ordersByMode: {},
+        deliveryByAddress: {},
+      };
     }
 
-    // --- NUEVO: Buscar la lista de pedidos detallados para ese día ---
+    // --- Buscar la lista de pedidos detallados para ese día ---
     let orders_detail = [];
     try {
-      // Formateamos las fechas para cubrir el día completo (de 00:00:00 a 23:59:59)
-      const startOfDay = `${dateKey} 00:00:00.000Z`;
-      const endOfDay = `${dateKey} 23:59:59.999Z`;
-      
-      // Asumimos que la colección se llama 'orders' y filtramos por el campo 'created'
-      // Ordenamos por fecha de creación para verlos en orden cronológico
+      // --- INICIO DE LA CORRECCIÓN ---
+      // Filtramos usando el operador LIKE (`~`) para que coincida con cualquier
+      // registro cuya fecha de creación COMIENCE con la fecha seleccionada (ej: "2023-10-26").
+      // Esto ignora la parte de la hora y la zona horaria, solucionando el problema.
       orders_detail = await pb.collection('orders').getFullList({
-        filter: `created >= "${startOfDay}" && created <= "${endOfDay}"`,
-        sort: 'created', // Ordena los pedidos del más antiguo al más reciente
+        filter: `created ~ "${dateKey}"`, // Esta es la línea corregida
+        sort: 'created',
       });
+      // --- FIN DE LA CORRECCIÓN ---
     } catch (err) {
       console.warn(`No se pudieron obtener los detalles de pedidos para el día ${dateKey}:`, err);
-      // No devolvemos un error, simplemente la lista de pedidos estará vacía
     }
 
     // --- Normalizamos los datos (sin cambios) ---
@@ -58,7 +69,7 @@ export default async function handler(req, res) {
       ordersByMethod: safe(dailyRecord.ordersByMethod),
       ordersByMode: safe(dailyRecord.ordersByMode),
       deliveryByAddress: safe(dailyRecord.deliveryByAddress),
-      orders_detail: orders_detail, // <-- NUEVO: Agregamos la lista de pedidos
+      orders_detail: orders_detail, // Agregamos la lista de pedidos
     });
 
   } catch (e) {
