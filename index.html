@@ -85,7 +85,6 @@ let chartRev=null, chartOrders=null;
 let autoTimer = null;
 
 // --- FUNCIÓN HELPER ---
-// Obtiene la fecha LOCAL del usuario en formato YYYY-MM-DD
 function getLocalDateString(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -107,7 +106,6 @@ autoChk.addEventListener('change', () => {
 });
 document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
-// Carga los datos del día actual al abrir la página
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('day').value = getLocalDateString();
   loadData();
@@ -163,8 +161,6 @@ function renderItemsList(itemsMap, limit = 200) {
     itemsListEl.appendChild(li);
   }
 }
-
-// --- FUNCIÓN MODIFICADA ---
 function renderOrdersList(orders = []) {
   ordersListContainer.innerHTML = '';
   if (!orders || orders.length === 0) {
@@ -175,19 +171,13 @@ function renderOrdersList(orders = []) {
     const orderEl = document.createElement('div');
     orderEl.className = 'order-item';
     const time = new Date(order.created).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-
-    // --- INICIO DE LA MODIFICACIÓN ---
     const direccion = order.direccion || 'No especificado';
     let locationHtml = '';
-
-    // Revisa si el campo 'direccion' contiene la palabra "retiro"
     if (direccion.toLowerCase().includes('retiro')) {
       locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
     } else {
       locationHtml = `<span class="order-address is-delivery">${escapeHtml(direccion)}</span>`;
     }
-    // --- FIN DE LA MODIFICACIÓN ---
-
     let itemsHtml = '<ul class="order-products-list">';
     if (Array.isArray(order.items)) {
         for (const item of order.items) {
@@ -199,7 +189,6 @@ function renderOrdersList(orders = []) {
         }
     }
     itemsHtml += '</ul>';
-
     orderEl.innerHTML = `<div class="order-header"><strong class="order-time">${time}hs</strong>${locationHtml}</div>${itemsHtml}`;
     ordersListContainer.appendChild(orderEl);
   }
@@ -225,12 +214,23 @@ async function loadData() {
     }
     const data = await res.json();
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Leemos los valores del objeto ordersByMode que ya viene de la API
+    const ordersByMode = data.ordersByMode || {};
+    // Usamos la función 'safeMethodValue' para buscar las llaves comunes (ej: "delivery" o "Delivery")
+    const deliveryCount = safeMethodValue(ordersByMode, ['delivery', 'Delivery']);
+    const pickupCount = safeMethodValue(ordersByMode, ['retiro', 'Retiro']);
+
     const rows = [
       ['dia', data.day || ''],
       ['total', `$${Number(data.revenue || 0).toLocaleString('es-AR')}`],
       ['pedidos', data.ordersCount || 0],
+      ['<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Delivery</span>', deliveryCount],
+      ['<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Retiro</span>', pickupCount],
       ['productos vendidos', sumItemsCount(data.itemsCount || {})]
     ];
+    // --- FIN DE LA MODIFICACIÓN ---
+
     rows.forEach(([label, val]) => {
       const div = document.createElement('div');
       div.className = 'list-row';
@@ -297,6 +297,9 @@ async function exportCsv() {
       csv += `dia,${detail.day || day}\n`;
       csv += `total,${detail.revenue}\n`;
       csv += `pedidos,${detail.ordersCount}\n`;
+      const ordersByMode = detail.ordersByMode || {};
+      csv += `delivery,${ordersByMode.delivery || 0}\n`;
+      csv += `retiro,${ordersByMode.retiro || 0}\n`;
       const rb = detail.revenueByMethod || {};
       csv += `efectivo,${safeMethodValue(rb, ['efectivo','efec','efecivo','cash'])}\n`;
       csv += `transferencia,${safeMethodValue(rb, ['transferencia','trans','transfer'])}\n`;

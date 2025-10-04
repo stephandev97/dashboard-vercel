@@ -8,28 +8,37 @@ export default async function handler(req, res) {
 
     let dailyRecord = await getDailyStatRecordSmart({ dateKey });
     if (!dailyRecord) {
-      dailyRecord = { day: dateKey, revenue: 0, ordersCount: 0, itemsCount: {} };
+      // Si no hay registro, creamos uno por defecto vacío
+      dailyRecord = {
+        day: dateKey,
+        revenue: 0,
+        ordersCount: 0,
+        itemsCount: {},
+        paidByMethod: {},
+        revenueByMethod: {},
+        ordersByMethod: {},
+        ordersByMode: {}, // Es importante tener el valor por defecto
+        deliveryByAddress: {},
+      };
     }
 
+    // La obtención de la lista de pedidos detallados sigue igual
     let orders_detail = [];
     try {
-      // --- LÓGICA FINAL Y SIMPLIFICADA USANDO "businessDate" ---
-      // Filtramos directamente donde el campo businessDate coincida con la fecha seleccionada.
       const filter = `businessDate = "${dateKey}"`;
-
       orders_detail = await pb.collection('orders').getFullList({
         filter: filter,
-        sort: 'created', // Los ordenamos por fecha de creación para verlos en orden
+        sort: 'created',
       });
-
     } catch (err) {
       console.warn(`No se pudieron obtener los detalles de pedidos para el día ${dateKey}:`, err);
     }
 
-    // El resto del código no cambia
+    // Funciones helper
     const safe = (v) => (v && typeof v === "object" && !Array.isArray(v) ? { ...v } : {});
     const asNumber = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
 
+    // Simplemente devolvemos los campos del registro, incluyendo ordersByMode
     return res.status(200).json({
       day: dailyRecord.day,
       revenue: asNumber(dailyRecord.revenue),
@@ -38,7 +47,7 @@ export default async function handler(req, res) {
       paidByMethod: safe(dailyRecord.paidByMethod),
       revenueByMethod: safe(dailyRecord.revenueByMethod),
       ordersByMethod: safe(dailyRecord.ordersByMethod),
-      ordersByMode: safe(dailyRecord.ordersByMode),
+      ordersByMode: safe(dailyRecord.ordersByMode), // Aquí está el campo clave
       deliveryByAddress: safe(dailyRecord.deliveryByAddress),
       orders_detail: orders_detail,
     });
