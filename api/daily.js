@@ -13,27 +13,13 @@ export default async function handler(req, res) {
 
     let orders_detail = [];
     try {
-      // --- LÓGICA DEFINITIVA USANDO EL CAMPO "hora" ---
-
-      // 1. Calculamos la fecha del día siguiente para el filtro.
-      const currentDate = new Date(`${dateKey}T12:00:00.000Z`); // Usamos mediodía para evitar errores de zona horaria
-      currentDate.setDate(currentDate.getDate() + 1);
-      const nextDateKey = currentDate.toISOString().slice(0, 10);
-
-      // 2. Construimos el filtro que combina dos rangos:
-      //    - Parte A: Pedidos de HOY (dateKey) a partir de las 03:00 AM.
-      const todayFilter = `(created ~ "${dateKey}" && hora >= "03:00")`;
-      
-      //    - Parte B: Pedidos de MAÑANA (nextDateKey) antes de las 03:00 AM.
-      const tomorrowFilter = `(created ~ "${nextDateKey}" && hora < "03:00")`;
-
-      // 3. Unimos las dos partes con un "OR" (||).
-      //    Esto crea la ventana de 24hs desde las 3 AM de un día hasta las 3 AM del siguiente.
-      const filter = `${todayFilter} || ${tomorrowFilter}`;
+      // --- LÓGICA FINAL Y SIMPLIFICADA USANDO "businessDate" ---
+      // Filtramos directamente donde el campo businessDate coincida con la fecha seleccionada.
+      const filter = `businessDate = "${dateKey}"`;
 
       orders_detail = await pb.collection('orders').getFullList({
         filter: filter,
-        sort: 'created', // Ordenamos por el timestamp completo para verlos en orden cronológico
+        sort: 'created', // Los ordenamos por fecha de creación para verlos en orden
       });
 
     } catch (err) {
