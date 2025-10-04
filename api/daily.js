@@ -2,11 +2,6 @@
 import { getDailyStatRecordSmart } from "../stats.js";
 import { pb } from "../lib/pb.js";
 
-// Helper para formatear la fecha como lo espera PocketBase ('YYYY-MM-DD HH:mm:ss')
-function toPbFilterDate(date) {
-  return date.toISOString().replace('T', ' ').substring(0, 19);
-}
-
 export default async function handler(req, res) {
   try {
     const dateKey = req.query?.day || new Date().toISOString().slice(0, 10);
@@ -18,29 +13,30 @@ export default async function handler(req, res) {
 
     let orders_detail = [];
     try {
-      // --- INICIO DE LA CORRECCIÓN FINAL DE ZONA HORARIA ---
+      // --- LÓGICA DE ZONA HORARIA DEFINITIVA ---
 
-      // 1. Creamos una fecha para el día seleccionado, asegurando que sea UTC.
-      //    Ej: "2025-10-04" se convierte en 2025-10-04T00:00:00.000Z.
-      const selectedDayUTC = new Date(`${dateKey}T00:00:00.000Z`);
+      // 1. El inicio de tu día local (ej: 4 de Octubre 00:00 ART) es a las 03:00 UTC.
+      //    Construimos el string de la fecha de inicio para la consulta.
+      const startRange = `${dateKey} 03:00:00`;
 
-      // 2. CORRECCIÓN: Para encontrar el inicio de tu día local (ART, UTC-3),
-      //    debemos RESTAR 3 horas a la fecha del día siguiente en UTC.
-      //    El día 4 de Octubre en Argentina comienza a las 21:00 UTC del 3 de Octubre.
-      const startOfLocalDay_UTC = new Date(selectedDayUTC.getTime() - (3 * 60 * 60 * 1000));
+      // 2. Para calcular el día siguiente de forma segura, creamos un objeto Date
+      //    y le sumamos un día.
+      const startDate = new Date(`${dateKey}T00:00:00.000Z`);
+      startDate.setDate(startDate.getDate() + 1);
+      const nextDateKey = startDate.toISOString().slice(0, 10);
 
-      // 3. El fin del día local es 24 horas después del inicio.
-      const endOfLocalDay_UTC = new Date(startOfLocalDay_UTC.getTime() + (24 * 60 * 60 * 1000));
+      // 3. El fin del rango es a las 03:00 UTC del día siguiente.
+      const endRange = `${nextDateKey} 03:00:00`;
 
-      // 4. Construimos el filtro. Esto ahora buscará desde las 21:00 UTC de un día
-      //    hasta las 21:00 UTC del día siguiente, cubriendo exactamente tu día local.
-      const filter = `created >= "${toPbFilterDate(startOfLocalDay_UTC)}" && created < "${toPbFilterDate(endOfLocalDay_UTC)}"`;
+      // 4. El filtro final. Para el 4 de Octubre, esto será:
+      //    created >= "2025-10-04 03:00:00" && created < "2025-10-05 03:00:00"
+      //    Este es el rango exacto que necesitas.
+      const filter = `created >= "${startRange}" && created < "${endRange}"`;
       
       orders_detail = await pb.collection('orders').getFullList({
         filter: filter,
         sort: 'created',
       });
-      // --- FIN DE LA CORRECCIÓN ---
 
     } catch (err) {
       console.warn(`No se pudieron obtener los detalles de pedidos para el día ${dateKey}:`, err);
