@@ -13,35 +13,34 @@ export default async function handler(req, res) {
 
     let orders_detail = [];
     try {
-      // --- LÓGICA DE ZONA HORARIA DEFINITIVA ---
+      // --- LÓGICA DEFINITIVA USANDO EL CAMPO "hora" ---
 
-      // 1. El inicio de tu día local (ej: 4 de Octubre 00:00 ART) es a las 03:00 UTC.
-      //    Construimos el string de la fecha de inicio para la consulta.
-      const startRange = `${dateKey} 03:00:00`;
+      // 1. Calculamos la fecha del día siguiente para el filtro.
+      const currentDate = new Date(`${dateKey}T12:00:00.000Z`); // Usamos mediodía para evitar errores de zona horaria
+      currentDate.setDate(currentDate.getDate() + 1);
+      const nextDateKey = currentDate.toISOString().slice(0, 10);
 
-      // 2. Para calcular el día siguiente de forma segura, creamos un objeto Date
-      //    y le sumamos un día.
-      const startDate = new Date(`${dateKey}T00:00:00.000Z`);
-      startDate.setDate(startDate.getDate() + 1);
-      const nextDateKey = startDate.toISOString().slice(0, 10);
-
-      // 3. El fin del rango es a las 03:00 UTC del día siguiente.
-      const endRange = `${nextDateKey} 03:00:00`;
-
-      // 4. El filtro final. Para el 4 de Octubre, esto será:
-      //    created >= "2025-10-04 03:00:00" && created < "2025-10-05 03:00:00"
-      //    Este es el rango exacto que necesitas.
-      const filter = `created >= "${startRange}" && created < "${endRange}"`;
+      // 2. Construimos el filtro que combina dos rangos:
+      //    - Parte A: Pedidos de HOY (dateKey) a partir de las 03:00 AM.
+      const todayFilter = `(created ~ "${dateKey}" && hora >= "03:00")`;
       
+      //    - Parte B: Pedidos de MAÑANA (nextDateKey) antes de las 03:00 AM.
+      const tomorrowFilter = `(created ~ "${nextDateKey}" && hora < "03:00")`;
+
+      // 3. Unimos las dos partes con un "OR" (||).
+      //    Esto crea la ventana de 24hs desde las 3 AM de un día hasta las 3 AM del siguiente.
+      const filter = `${todayFilter} || ${tomorrowFilter}`;
+
       orders_detail = await pb.collection('orders').getFullList({
         filter: filter,
-        sort: 'created',
+        sort: 'created', // Ordenamos por el timestamp completo para verlos en orden cronológico
       });
 
     } catch (err) {
       console.warn(`No se pudieron obtener los detalles de pedidos para el día ${dateKey}:`, err);
     }
 
+    // El resto del código no cambia
     const safe = (v) => (v && typeof v === "object" && !Array.isArray(v) ? { ...v } : {});
     const asNumber = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
 
