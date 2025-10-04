@@ -153,3 +153,60 @@ details summary {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* --- Estilos para la nueva lista de pedidos --- */
+.orders-list-container {
+    margin-top: 1rem;
+    max-height: 500px; /* Altura máxima para evitar que sea muy largo */
+    overflow-y: auto; /* Scroll vertical si es necesario */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Espacio entre cada pedido */
+}
+
+.order-item {
+    padding: .8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.order-time {
+    font-size: 1.1rem;
+    color: #0ea5e9;
+}
+
+.order-address {
+    font-size: .85rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.order-products-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: .9rem;
+}
+
+.order-products-list li {
+    padding: .25rem 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.order-products-list .qty {
+    font-weight: 600;
+    background-color: #eef2ff;
+    padding: 0 .4rem;
+    border-radius: 4px;
+}
