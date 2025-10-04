@@ -72,7 +72,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// El código JavaScript permanece igual, ya que no depende del CSS en línea.
+// Referencias a elementos del DOM
 const elErr = document.getElementById('error');
 const dayList = document.getElementById('dayList');
 const prodTotalEl = document.getElementById('prodDetails');
@@ -86,6 +86,7 @@ const ordersListContainer = document.getElementById('ordersListContainer');
 let chartRev=null, chartOrders=null;
 let autoTimer = null;
 
+// Event Listeners
 document.getElementById('btnLoad').addEventListener('click', loadData);
 document.getElementById('btnToday').addEventListener('click', () => {
   document.getElementById('day').value = new Date().toISOString().slice(0,10);
@@ -156,7 +157,7 @@ function escapeHtml(s) {
     .replaceAll("'",'&#39;');
 }
 
-/* ======= NUEVA FUNCIÓN: Renderizar lista de pedidos ======= */
+/* ======= Renderizar lista de pedidos (CORREGIDA) ======= */
 function renderOrdersList(orders = []) {
   ordersListContainer.innerHTML = ''; // Limpiar la lista anterior
   if (!orders || orders.length === 0) {
@@ -180,14 +181,25 @@ function renderOrdersList(orders = []) {
       location = 'Retira en local';
     }
 
+    // --- INICIO DE LA CORRECCIÓN ---
     // Crear la lista de productos para este pedido
     let itemsHtml = '<ul class="order-products-list">';
-    if (order.items && typeof order.items === 'object') {
-      for (const [name, qty] of Object.entries(order.items)) {
-        itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
-      }
+    // Verifica si `order.items` es un array (la causa del error [object Object])
+    if (Array.isArray(order.items)) {
+        for (const item of order.items) {
+            // Asumimos que cada 'item' es un objeto con 'name' y 'qty'
+            const name = item.name || 'Producto sin nombre';
+            const qty = item.qty || 1;
+            itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
+        }
+    } else if (order.items && typeof order.items === 'object') {
+        // Mantenemos la lógica anterior como fallback si 'items' es un objeto clave-valor
+        for (const [name, qty] of Object.entries(order.items)) {
+            itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
+        }
     }
     itemsHtml += '</ul>';
+    // --- FIN DE LA CORRECCIÓN ---
 
     orderEl.innerHTML = `
       <div class="order-header">
@@ -200,7 +212,7 @@ function renderOrdersList(orders = []) {
   }
 }
 
-/* ======= Main load function (MODIFICADA) ======= */
+/* ======= Main load function ======= */
 async function loadData() {
   elErr.textContent = '';
   dayList.innerHTML = '';
@@ -241,7 +253,7 @@ async function loadData() {
       dayList.appendChild(div);
     }
 
-    // Top items row (chips) placed under 'pedidos' visually:
+    // Top items row (chips)
     renderTopItemsRow(data.itemsCount || {}, 20);
 
     // Detailed list inside details:
@@ -251,7 +263,7 @@ async function loadData() {
     wEfectivo.textContent = `$${efectivo}`;
     wTransfer.textContent = `$${transferencia}`;
 
-    // ======== NUEVO: Renderizar la lista de pedidos ========
+    // Renderizar la lista de pedidos detallados
     renderOrdersList(data.orders_detail);
 
     // Rango 7 días charts
@@ -263,7 +275,7 @@ async function loadData() {
   }
 }
 
-/* ======= Range charts (same as before) ======= */
+/* ======= Range charts ======= */
 async function loadRangeAndRender(days=7) {
   try {
     const res = await fetch(`/api/daily-range?days=${days}`);
@@ -292,7 +304,7 @@ async function loadRangeAndRender(days=7) {
   }
 }
 
-/* ======= CSV export (incluye detalle de productos) ======= */
+/* ======= CSV export ======= */
 async function exportCsv() {
   try {
     const day = document.getElementById('day').value || new Date().toISOString().slice(0,10);
@@ -301,11 +313,11 @@ async function exportCsv() {
       fetch('/api/daily?day=' + day).then(r=>r.ok? r.json(): null)
     ]);
 
-    // CSV: primer bloque = últimos 7 días (dia,total,pedidos)
+    // CSV: primer bloque = últimos 7 días
     let csv = 'dia,total,pedidos\n';
     for (const r of range) csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
 
-    // Detalle día: productos (lista) + efectivo/transferencia
+    // Detalle día
     if (detail) {
       const productosVendidos = sumItemsCount(detail.itemsCount || {});
       const rb = detail.revenueByMethod || {};
