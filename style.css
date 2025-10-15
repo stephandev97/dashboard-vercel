@@ -3,12 +3,12 @@ body {
     font-family: Inter, system-ui, Arial;
     margin: 0;
     padding: 1rem;
-    background: #f5f7fb;
-    color: #111;
+    background: #FAF0E6; /* Beige claro para el fondo general */
+    color: #3D402C; /* Tono oliva oscuro para el texto principal */
 }
 
 header {
-    background: #0ea5e9;
+    background: #6B8E23; /* Verde oliva para la cabecera */
     color: #fff;
     padding: 12px;
     border-radius: 8px;
@@ -31,7 +31,7 @@ header {
 input, button {
     padding: .5rem;
     border-radius: 6px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #DCDACF; /* Borde beige/grisáceo */
     background: white;
     font-size: 1rem;
     cursor: pointer;
@@ -39,7 +39,7 @@ input, button {
 }
 
 button:hover {
-    background-color: #e2e8f0;
+    background-color: #E9E6D7; /* Beige un poco más oscuro al pasar el ratón */
 }
 
 .grid {
@@ -50,17 +50,17 @@ button:hover {
 }
 
 .card {
-    background: #fff;
+    background: #FCFBF4; /* Un blanco roto-beige muy sutil para las tarjetas */
     padding: 16px;
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(2, 6, 23, 0.06), 0 2px 8px rgba(2, 6, 23, 0.04);
+    box-shadow: 0 1px 4px rgba(40, 43, 22, 0.06), 0 2px 8px rgba(40, 43, 22, 0.04);
 }
 
 .list-row {
     display: flex;
     justify-content: space-between;
     padding: .75rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #E9E6D7;
     align-items: center;
 }
 
@@ -76,8 +76,8 @@ button:hover {
     min-width: 140px;
     padding: .8rem;
     border-radius: 8px;
-    background: #f8fafc;
-    border: 1px solid #e6eef7;
+    background: #F5F5DC; /* Beige estándar para los widgets */
+    border: 1px solid #E9E6D7;
     text-align: center;
 }
 
@@ -122,8 +122,8 @@ details summary {
     gap: .5rem;
     padding: .4rem .6rem;
     border-radius: 999px;
-    background: #eef2ff;
-    border: 1px solid #dbeafe;
+    background: #E9E6D7; /* Fondo beige para las etiquetas de producto */
+    border: 1px solid #DCDACF;
     font-size: .9rem;
 }
 
@@ -136,7 +136,7 @@ details summary {
     background: #fff;
     padding: .15rem .45rem;
     border-radius: 6px;
-    border: 1px solid #e6eef7;
+    border: 1px solid #E9E6D7;
     margin-left: .25rem;
     font-weight: 600;
 }
@@ -166,9 +166,9 @@ details summary {
 
 .order-item {
     padding: .8rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #E9E6D7;
     border-radius: 8px;
-    background: #f8fafc;
+    background: #F5F5DC; /* Fondo beige */
 }
 
 .order-header {
@@ -177,12 +177,12 @@ details summary {
     align-items: center;
     margin-bottom: .5rem;
     padding-bottom: .5rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #E9E6D7;
 }
 
 .order-time {
     font-size: 1.1rem;
-    color: #0ea5e9;
+    color: #556B2F; /* Verde oliva oscuro para la hora */
 }
 
 .order-address {
@@ -206,7 +206,7 @@ details summary {
 
 .order-products-list .qty {
     font-weight: 600;
-    background-color: #eef2ff;
+    background-color: #E9E6D7; /* Fondo beige */
     padding: 0 .4rem;
     border-radius: 4px;
 }
@@ -225,11 +225,11 @@ details summary {
 .order-address.is-retiro {
     font-weight: 700;
     font-size: .8rem;
-    color: #4338ca; /* Un color violeta */
-    background-color: #eef2ff; /* Un fondo claro a juego */
+    color: #556B2F; /* Verde oliva oscuro */
+    background-color: #E9E6D7; /* Un fondo beige a juego */
     padding: .2rem .6rem;
     border-radius: 99px; /* Para hacerlo redondeado */
-    border: 1px solid #dbeafe;
+    border: 1px solid #DCDACF;
 }
 
 /* Estilo para las direcciones de delivery */
