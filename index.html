@@ -181,7 +181,7 @@ function renderOrdersList(orders = []) {
     let itemsHtml = '<ul class="order-products-list">';
     if (Array.isArray(order.items)) {
         for (const item of order.items) {
-            itemsHtml += `<li>${escapeHtml(item.name || 'N/A')} <span class="qty">${item.qty || 1}</span></li>`;
+            itemsHtml += `<li>${escapeHtml(item.name || 'N/A')} <span class="qty">${item.quantity || 1}</span></li>`;
         }
     } else if (order.items && typeof order.items === 'object') {
         for (const [name, qty] of Object.entries(order.items)) {
