@@ -55,6 +55,17 @@
       </div>
     </div>
 
+    <div class="small-widgets">
+        <div class="widget">
+          <div style="font-size:.8rem;color:#666">caja efectivo</div>
+          <div id="wCajaEf" style="font-weight:700;font-size:1.1rem">$0</div>
+        </div>
+        <div class="widget">
+          <div style="font-size:.8rem;color:#666">caja transferencia</div>
+          <div id="wCajaMp" style="font-weight:700;font-size:1.1rem">$0</div>
+        </div>
+      </div>
+
     <div class="card">
       <h3 style="margin:.2rem 0">Listado de Pedidos</h3>
       <div id="ordersListContainer" class="orders-list-container">
@@ -72,6 +83,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  
 const elErr = document.getElementById('error');
 const dayList = document.getElementById('dayList');
 const itemsListEl = document.getElementById('itemsList');
@@ -80,6 +92,8 @@ const wEfectivo = document.getElementById('wEfectivo');
 const wTransfer = document.getElementById('wTransfer');
 const autoChk = document.getElementById('auto');
 const ordersListContainer = document.getElementById('ordersListContainer');
+const wCajaEf = document.getElementById('wCajaEf');
+const wCajaMp = document.getElementById('wCajaMp');
 
 let chartRev=null, chartOrders=null;
 let autoTimer = null;
@@ -241,6 +255,10 @@ async function loadData() {
     const rb = data.revenueByMethod || {};
     wEfectivo.textContent = `$${(safeMethodValue(rb, ['efectivo','efec','efecivo','cash'])).toLocaleString('es-AR')}`;
     wTransfer.textContent = `$${(safeMethodValue(rb, ['transferencia','trans','transfer'])).toLocaleString('es-AR')}`;
+
+    const pbm = data.paidByMethod || {};
+    wCajaEf.textContent = `$${safeMethodValue(pbm, ['efectivo','efec','efecivo','cash']).toLocaleString('es-AR')}`;
+    wCajaMp.textContent = `$${safeMethodValue(pbm, ['transferencia','trans','transfer','mp','mercadopago']).toLocaleString('es-AR')}`;
 
     renderTopItemsRow(data.itemsCount || {}, 20);
     renderItemsList(data.itemsCount || {}, 200);
