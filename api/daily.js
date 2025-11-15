@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       const filter = `businessDate = "${dateKey}"`;
       orders_detail = await pb.collection('orders').getFullList({
         filter: filter,
-        sort: 'created',
+        sort: '-created',
       });
     } catch (err) {
       console.warn(`No se pudieron obtener los detalles de pedidos para el día ${dateKey}:`, err);
