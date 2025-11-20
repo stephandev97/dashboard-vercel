@@ -34,15 +34,6 @@
 
       <div id="topItemsRow" class="top-items-row" aria-hidden="false"></div>
 
-      <div style="margin-top:10px">
-        <details id="prodDetails">
-          <summary style="font-size:.95rem;color:#0f172a">Ver productos (clic para mostrar/ocultar)</summary>
-          <div class="items-list">
-            <ol id="itemsList" style="margin:0;padding-left:1rem"></ol>
-          </div>
-        </details>
-      </div>
-
       <div class="small-widgets">
         <div class="widget">
           <div style="font-size:.8rem;color:#666">efectivo</div>
@@ -160,19 +151,6 @@ function renderTopItemsRow(itemsMap, limit = 20) {
     chip.className = 'chip';
     chip.innerHTML = `<span style="font-size:.95rem">${escapeHtml(name)}</span><span class="qty">${qty}</span>`;
     topItemsRow.appendChild(chip);
-  }
-}
-function renderItemsList(itemsMap, limit = 200) {
-  itemsListEl.innerHTML = '';
-  if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
-    itemsListEl.innerHTML = '<li>No hay productos registrados</li>';
-    return;
-  }
-  const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
-  for (const [name, qty] of entries) {
-    const li = document.createElement('li');
-    li.innerHTML = `<strong>${escapeHtml(name)}</strong> — <span style="float:right">${qty}</span>`;
-    itemsListEl.appendChild(li);
   }
 }
 
@@ -308,12 +286,12 @@ async function loadData() {
     const pickupCount = safeMethodValue(ordersByMode, ['retiro', 'Retiro']);
 
     const rows = [
-      ['dia', data.day || ''],
-      ['total', `$${Number(data.revenue || 0).toLocaleString('es-AR')}`],
-      ['pedidos', data.ordersCount || 0],
+      ['Día', data.day || ''],
+      ['Total', `$${Number(data.revenue || 0).toLocaleString('es-AR')}`],
+      ['Pedidos', data.ordersCount || 0],
       ['<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Delivery</span>', deliveryCount],
       ['<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Retiro</span>', pickupCount],
-      ['productos vendidos', sumItemsCount(data.itemsCount || {})]
+      ['Productos Vendidos', sumItemsCount(data.itemsCount || {})]
     ];
     // --- FIN DE LA MODIFICACIÓN ---
 
@@ -333,7 +311,6 @@ async function loadData() {
     wCajaMp.textContent = `$${safeMethodValue(pbm, ['transferencia','trans','transfer','mp','mercadopago']).toLocaleString('es-AR')}`;
 
     renderTopItemsRow(data.itemsCount || {}, 20);
-    renderItemsList(data.itemsCount || {}, 200);
     renderOrdersList(data.orders_detail);
     await loadRangeAndRender(7);
 
