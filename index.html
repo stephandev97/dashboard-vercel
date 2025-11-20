@@ -175,38 +175,110 @@ function renderItemsList(itemsMap, limit = 200) {
     itemsListEl.appendChild(li);
   }
 }
+
+function getPaymentBadgeHtml(order) {
+  // 1) Intentar leer algún campo de texto obvio
+  const rawMethod =
+    (order.paymentMethod ||
+     order.metodoPago ||
+     order.medioPago ||
+     order.method ||
+     '').toString().toLowerCase();
+
+  let label = '';
+  let badgeClass = '';
+
+  if (rawMethod.includes('efec')) {
+    label = 'Efectivo';
+    badgeClass = 'is-efectivo';
+  } else if (
+    rawMethod.includes('trans') ||
+    rawMethod.includes('mp') ||
+    rawMethod.includes('mercado')
+  ) {
+    label = 'Transferencia';
+    badgeClass = 'is-transfer';
+  }
+
+  // 2) Si no hay nada claro, mirar montos
+  const cash =
+    Number(order.pagoEfectivo ?? order.efectivo ?? 0) || 0;
+  const mp =
+    Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
+
+  if (!label) {
+    if (cash > 0 && mp > 0) {
+      label = 'Mixto';
+      badgeClass = 'is-mixto';
+    } else if (cash > 0) {
+      label = 'Efectivo';
+      badgeClass = 'is-efectivo';
+    } else if (mp > 0) {
+      label = 'Transferencia';
+      badgeClass = 'is-transfer';
+    }
+  }
+
+  // 3) Si seguimos sin poder inferir, no muestres nada
+  if (!label) return '';
+
+  return `<span class="payment-badge ${badgeClass}">${label}</span>`;
+}
+
 function renderOrdersList(orders = []) {
   ordersListContainer.innerHTML = '';
   if (!orders || orders.length === 0) {
     ordersListContainer.innerHTML = '<span class="subtitle">No hay pedidos para este día.</span>';
     return;
   }
+
   for (const order of orders) {
     const orderEl = document.createElement('div');
     orderEl.className = 'order-item';
-    const time = new Date(order.created).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+    const time = new Date(order.created).toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     const direccion = order.direccion || 'No especificado';
+
     let locationHtml = '';
     if (direccion.toLowerCase().includes('retiro')) {
       locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
     } else {
       locationHtml = `<span class="order-address is-delivery">${escapeHtml(direccion)}</span>`;
     }
+
+    const paymentHtml = getPaymentBadgeHtml(order);
+
     let itemsHtml = '<ul class="order-products-list">';
     if (Array.isArray(order.items)) {
-        for (const item of order.items) {
-            itemsHtml += `<li>${escapeHtml(item.name || 'N/A')} <span class="qty">${item.quantity || 1}</span></li>`;
-        }
+      for (const item of order.items) {
+        itemsHtml += `<li>${escapeHtml(item.name || 'N/A')} <span class="qty">${item.quantity || 1}</span></li>`;
+      }
     } else if (order.items && typeof order.items === 'object') {
-        for (const [name, qty] of Object.entries(order.items)) {
-            itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
-        }
+      for (const [name, qty] of Object.entries(order.items)) {
+        itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
+      }
     }
     itemsHtml += '</ul>';
-    orderEl.innerHTML = `<div class="order-header"><strong class="order-time">${time}hs</strong>${locationHtml}</div>${itemsHtml}`;
+
+    orderEl.innerHTML = `
+      <div class="order-header">
+        <strong class="order-time">${time}hs</strong>
+        <div class="order-header-right">
+          ${locationHtml}
+          ${paymentHtml}
+        </div>
+      </div>
+      ${itemsHtml}
+    `;
+
     ordersListContainer.appendChild(orderEl);
   }
 }
+
 
 /* ======= Main load function ======= */
 async function loadData() {

@@ -1,18 +1,20 @@
-/* style.css */
+/* style.css – Dark Mode */
+
 body {
     font-family: Inter, system-ui, Arial;
     margin: 0;
     padding: 1rem;
-    background: #FAF0E6; /* Beige claro para el fondo general */
-    color: #3D402C; /* Tono oliva oscuro para el texto principal */
+    background: #020617; /* fondo general muy oscuro */
+    color: #e5e7eb;      /* texto gris claro */
 }
 
 header {
-    background: #6B8E23; /* Verde oliva para la cabecera */
-    color: #fff;
+    background: #020617;
+    color: #e5e7eb;
     padding: 12px;
     border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    border: 1px solid #1e293b;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
 }
 
 .container {
@@ -31,16 +33,29 @@ header {
 input, button {
     padding: .5rem;
     border-radius: 6px;
-    border: 1px solid #DCDACF; /* Borde beige/grisáceo */
-    background: white;
+    border: 1px solid #1f2937;
+    background: #020617;
+    color: #e5e7eb;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+input[type="date"] {
+    padding-right: .75rem;
 }
 
 button:hover {
-    background-color: #E9E6D7; /* Beige un poco más oscuro al pasar el ratón */
+    background-color: #0f172a;
+    border-color: #334155;
+    transform: translateY(-1px);
 }
+
+button:active {
+    transform: translateY(0);
+}
+
+/* GRID / CARDS */
 
 .grid {
     display: grid;
@@ -50,19 +65,27 @@ button:hover {
 }
 
 .card {
-    background: #FCFBF4; /* Un blanco roto-beige muy sutil para las tarjetas */
+    background: radial-gradient(circle at top left, #020617 0, #020617 40%, #020617 100%);
     padding: 16px;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(40, 43, 22, 0.06), 0 2px 8px rgba(40, 43, 22, 0.04);
+    border-radius: 12px;
+    border: 1px solid #1f2937;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.45);
 }
 
 .list-row {
     display: flex;
     justify-content: space-between;
     padding: .75rem 0;
-    border-bottom: 1px solid #E9E6D7;
+    border-bottom: 1px solid #111827;
     align-items: center;
 }
+
+.subtitle {
+    font-size: .85rem;
+    color: #9ca3af;
+}
+
+/* MINI WIDGETS */
 
 .small-widgets {
     display: flex;
@@ -75,11 +98,14 @@ button:hover {
     flex: 1;
     min-width: 140px;
     padding: .8rem;
-    border-radius: 8px;
-    background: #F5F5DC; /* Beige estándar para los widgets */
-    border: 1px solid #E9E6D7;
+    border-radius: 10px;
+    background: #020617;
+    border: 1px solid #1f2937;
     text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
 }
+
+/* LISTA DE PRODUCTOS */
 
 .items-list {
     margin-top: .5rem;
@@ -90,7 +116,7 @@ button:hover {
 
 .items-list li {
     padding: .4rem 0;
-    border-bottom: 1px dashed #eee;
+    border-bottom: 1px dashed #111827;
     font-size: .95rem;
 }
 
@@ -100,17 +126,15 @@ details summary {
     list-style: none;
     outline: none;
     font-weight: 500;
+    color: #e5e7eb;
 }
 
-.subtitle {
-    font-size: .85rem;
-    color: #666;
-}
+/* TOP ITEMS */
 
 .top-items-row {
     display: flex;
     gap: .5rem;
-    flex-wrap: wrap; /* Nuevo: hace que los elementos se envuelvan en la siguiente línea */
+    flex-wrap: wrap;
     padding-top: .75rem;
     padding-bottom: .25rem;
 }
@@ -122,53 +146,54 @@ details summary {
     gap: .5rem;
     padding: .4rem .6rem;
     border-radius: 999px;
-    background: #E9E6D7; /* Fondo beige para las etiquetas de producto */
-    border: 1px solid #DCDACF;
+    background: #020617;
+    border: 1px solid #1f2937;
     font-size: .9rem;
-}
-
-.chip b {
-    font-weight: 700;
-    margin-right: .3rem;
+    color: #e5e7eb;
 }
 
 .chip .qty {
-    background: #fff;
+    background: #020617;
     padding: .15rem .45rem;
     border-radius: 6px;
-    border: 1px solid #E9E6D7;
+    border: 1px solid #1f2937;
     margin-left: .25rem;
     font-weight: 600;
 }
 
+/* ERRORES */
+
 #error {
-    color: #b91c1c;
+    color: #f97373;
     margin-top: 8px;
     font-weight: 500;
 }
 
-/* Responsive layout for larger screens */
-@media(min-width: 900px) {
+/* RESPONSIVE */
+
+@media (min-width: 900px) {
     .grid {
         grid-template-columns: 1fr 1fr;
     }
 }
 
-/* --- Estilos para la nueva lista de pedidos --- */
+/* --- LISTADO DE PEDIDOS --- */
+
 .orders-list-container {
     margin-top: 1rem;
-    max-height: 500px; /* Altura máxima para evitar que sea muy largo */
-    overflow-y: auto; /* Scroll vertical si es necesario */
+    max-height: 500px;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* Espacio entre cada pedido */
+    gap: 1rem;
 }
 
 .order-item {
     padding: .8rem;
-    border: 1px solid #E9E6D7;
-    border-radius: 8px;
-    background: #F5F5DC; /* Fondo beige */
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+    background: #020617;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.6);
 }
 
 .order-header {
@@ -177,19 +202,47 @@ details summary {
     align-items: center;
     margin-bottom: .5rem;
     padding-bottom: .5rem;
-    border-bottom: 1px solid #E9E6D7;
+    border-bottom: 1px solid #111827;
+}
+
+/* Contenedor derecha: dirección + medio de pago */
+.order-header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
 }
 
 .order-time {
     font-size: 1.1rem;
-    color: #556B2F; /* Verde oliva oscuro para la hora */
+    color: #e5e7eb;
 }
 
 .order-address {
     font-size: .85rem;
-    color: #475569;
     font-weight: 500;
 }
+
+/* Etiqueta "Retiro" */
+.order-address.is-retiro {
+    font-weight: 700;
+    font-size: .75rem;
+    color: #e5e7eb;
+    background-color: #16a34a;
+    padding: .2rem .6rem;
+    border-radius: 999px;
+    border: 1px solid #22c55e;
+}
+
+/* Direcciones de delivery */
+.order-address.is-delivery {
+    font-size: .85rem;
+    color: #9ca3af;
+    text-align: right;
+    max-width: 60%;
+}
+
+/* LISTA DE PRODUCTOS DENTRO DEL PEDIDO */
 
 .order-products-list {
     list-style: none;
@@ -206,37 +259,46 @@ details summary {
 
 .order-products-list .qty {
     font-weight: 600;
-    background-color: #E9E6D7; /* Fondo beige */
-    padding: 0 .4rem;
+    background-color: #020617;
     border-radius: 4px;
+    border: 1px solid #1f2937;
+    padding: 0 .4rem;
 }
 
-/* Al final de style.css */
+/* --- BURBUJA DE MEDIO DE PAGO --- */
 
-/* --- Estilos para Retiro vs Delivery --- */
-
-/* Estilo base para ambos, lo eliminamos para evitar conflictos */
-.order-address {
-    /* Puedes dejar propiedades comunes aquí si quieres, como el margen */
-    margin-left: auto; /* Empuja el elemento a la derecha */
+.payment-badge {
+    font-size: .7rem;
+    text-transform: uppercase;
+    padding: .18rem .6rem;
+    border-radius: 999px;
+    border: 1px solid #1e293b;
+    background: #0f172a;
+    color: #e5e7eb;
+    letter-spacing: 0.03em;
 }
 
-/* Estilo para la etiqueta "Retiro" */
-.order-address.is-retiro {
-    font-weight: 700;
-    font-size: .8rem;
-    color: #556B2F; /* Verde oliva oscuro */
-    background-color: #E9E6D7; /* Un fondo beige a juego */
-    padding: .2rem .6rem;
-    border-radius: 99px; /* Para hacerlo redondeado */
-    border: 1px solid #DCDACF;
+/* Colores según medio de pago */
+.payment-badge.is-efectivo {
+    background: rgba(34,197,94,0.15);
+    border-color: #22c55e;
+    color: #bbf7d0;
 }
 
-/* Estilo para las direcciones de delivery */
-.order-address.is-delivery {
-    font-size: .85rem;
-    color: #475569; /* Un color gris oscuro */
-    font-weight: 500;
-    text-align: right;
-    max-width: 60%; /* Evita que la dirección sea demasiado ancha en móviles */
+.payment-badge.is-transfer {
+    background: rgba(59,130,246,0.15);
+    border-color: #3b82f6;
+    color: #bfdbfe;
+}
+
+.payment-badge.is-mixto {
+    background: rgba(234,179,8,0.12);
+    border-color: #eab308;
+    color: #facc15;
+}
+
+.payment-badge.is-otro {
+    background: rgba(148,163,184,0.18);
+    border-color: #64748b;
+    color: #e5e7eb;
 }
