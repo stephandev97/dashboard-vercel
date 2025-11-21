@@ -318,8 +318,21 @@ details[open] summary {
 .order-header-right {
   margin-left: auto;
   display: flex;
-  align-items: center;
-  gap: .45rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .25rem;
+}
+
+.order-payment-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.order-total {
+  font-size: .78rem;
+  color: var(--pixel-text-soft);
 }
 
 /* dirección base (si la usás suelta) */

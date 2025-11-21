@@ -203,6 +203,28 @@ function getPaymentBadgeHtml(order) {
   return `<span class="payment-badge ${badgeClass}">${label}</span>`;
 }
 
+function getOrderTotal(order) {
+  const keys = [
+    'total',
+    'montoTotal',
+    'monto_total',
+    'totalAmount',
+    'importe',
+    'price',
+    'precio'
+  ];
+
+  for (const k of keys) {
+    if (order[k] !== undefined && order[k] !== null) {
+      const n = Number(order[k]);
+      if (!Number.isNaN(n)) return n;
+    }
+  }
+
+  // si no encontramos nada, no mostramos total
+  return null;
+}
+
 function renderOrdersList(orders = []) {
   ordersListContainer.innerHTML = '';
   if (!orders || orders.length === 0) {
@@ -215,9 +237,10 @@ function renderOrdersList(orders = []) {
     orderEl.className = 'order-item';
 
     const time = new Date(order.created).toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false   // ← fuerza 24 hs
+});
 
     const direccion = order.direccion || 'No especificado';
 
@@ -229,6 +252,11 @@ function renderOrdersList(orders = []) {
     }
 
     const paymentHtml = getPaymentBadgeHtml(order);
+
+    const total = getOrderTotal(order);
+const totalHtml = total !== null
+  ? `<div class="order-total">$${total.toLocaleString('es-AR')}</div>`
+  : '';
 
     let itemsHtml = '<ul class="order-products-list">';
     if (Array.isArray(order.items)) {
@@ -243,15 +271,18 @@ function renderOrdersList(orders = []) {
     itemsHtml += '</ul>';
 
     orderEl.innerHTML = `
-      <div class="order-header">
-        <strong class="order-time">${time}hs</strong>
-        <div class="order-header-right">
-          ${locationHtml}
-          ${paymentHtml}
-        </div>
+  <div class="order-header">
+    <strong class="order-time">${time}hs</strong>
+    <div class="order-header-right">
+      ${locationHtml}
+      <div class="order-payment-block">
+        ${paymentHtml}
+        ${totalHtml}
       </div>
-      ${itemsHtml}
-    `;
+    </div>
+  </div>
+  ${itemsHtml}
+`;
 
     ordersListContainer.appendChild(orderEl);
   }
