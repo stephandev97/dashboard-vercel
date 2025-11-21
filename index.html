@@ -237,10 +237,10 @@ function renderOrdersList(orders = []) {
     orderEl.className = 'order-item';
 
     const time = new Date(order.created).toLocaleTimeString('es-AR', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false   // ← fuerza 24 hs
-});
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false   // formato 24 hs (esto ya lo tenías bien)
+    });
 
     const direccion = order.direccion || 'No especificado';
 
@@ -252,11 +252,7 @@ function renderOrdersList(orders = []) {
     }
 
     const paymentHtml = getPaymentBadgeHtml(order);
-
     const total = getOrderTotal(order);
-const totalHtml = total !== null
-  ? `<div class="order-total">$${total.toLocaleString('es-AR')}</div>`
-  : '';
 
     let itemsHtml = '<ul class="order-products-list">';
     if (Array.isArray(order.items)) {
@@ -270,19 +266,23 @@ const totalHtml = total !== null
     }
     itemsHtml += '</ul>';
 
+    const totalHtml = total !== null
+      ? `<div class="order-total-row">
+           <span class="order-total-pill">$${total.toLocaleString('es-AR')}</span>
+         </div>`
+      : '';
+
     orderEl.innerHTML = `
-  <div class="order-header">
-    <strong class="order-time">${time}hs</strong>
-    <div class="order-header-right">
-      ${locationHtml}
-      <div class="order-payment-block">
-        ${paymentHtml}
-        ${totalHtml}
+      <div class="order-header">
+        <strong class="order-time">${time}hs</strong>
+        <div class="order-header-right">
+          ${locationHtml}
+          ${paymentHtml}
+        </div>
       </div>
-    </div>
-  </div>
-  ${itemsHtml}
-`;
+      ${itemsHtml}
+      ${totalHtml}
+    `;
 
     ordersListContainer.appendChild(orderEl);
   }
