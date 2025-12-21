@@ -1,4 +1,4 @@
-import PocketBase from "https://esm.sh/pocketbase";
+import PocketBase from "pocketbase";
 import { getDailyStatRecordSmart } from "../../stats.js";
 
 function formatDay(d) {
