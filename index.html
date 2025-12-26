@@ -1,278 +1,335 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Dashboard Daily Stats</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<header>
-  <h1 style="margin:0;font-size:1.05rem">Dashboard — Daily Stats</h1>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard Daily Stats</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1 style="margin: 0; font-size: 1.05rem">Dashboard — Daily Stats</h1>
+    </header>
 
-<div class="container">
-  <div class="controls">
-    <input type="date" id="day" />
-    <button id="btnLoad">Cargar</button>
-    <button id="btnToday">Hoy</button>
-    <label style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
-      <span style="font-size:.9rem">Auto-refresh</span>
-      <input id="auto" type="checkbox" />
-    </label>
-    <button id="exportCsv">Exportar CSV</button>
-  </div>
+    <div class="container">
+      <div class="controls">
+        <input type="date" id="day" />
+        <button id="btnLoad">Cargar</button>
+        <button id="btnToday">Hoy</button>
+        <label
+          style="
+            margin-left: auto;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+          "
+        >
+          <span style="font-size: 0.9rem">Auto-refresh</span>
+          <input id="auto" type="checkbox" />
+        </label>
+        <button id="exportCsv">Exportar CSV</button>
+      </div>
 
-  <div id="error"></div>
+      <div id="error"></div>
 
-  <div class="grid">
-    <div class="card" id="cardDay">
-      <h3 style="margin:.2rem 0">Resumen del día</h3>
-      <div id="dayList">
+      <div class="grid">
+        <div class="card" id="cardDay">
+          <h3 style="margin: 0.2rem 0">Resumen del día</h3>
+          <div id="dayList"></div>
+
+          <div id="topItemsRow" class="top-items-row" aria-hidden="false"></div>
+
+          <div class="small-widgets">
+            <div class="widget">
+              <div style="font-size: 0.8rem; color: #666">efectivo</div>
+              <div id="wEfectivo" style="font-weight: 700; font-size: 1.1rem">
+                $0
+              </div>
+            </div>
+            <div class="widget">
+              <div style="font-size: 0.8rem; color: #666">transferencia</div>
+              <div id="wTransfer" style="font-weight: 700; font-size: 1.1rem">
+                $0
+              </div>
+            </div>
+          </div>
         </div>
 
-      <div id="topItemsRow" class="top-items-row" aria-hidden="false"></div>
+        <div class="small-widgets">
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">caja efectivo</div>
+            <div id="wCajaEf" style="font-weight: 700; font-size: 1.1rem">
+              $0
+            </div>
+          </div>
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">caja transferencia</div>
+            <div id="wCajaMp" style="font-weight: 700; font-size: 1.1rem">
+              $0
+            </div>
+          </div>
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">
+              transferencia delivery
+            </div>
+            <div id="wTransDelivery" style="font-weight: 700">$0</div>
+          </div>
 
-      <div class="small-widgets">
-        <div class="widget">
-          <div style="font-size:.8rem;color:#666">efectivo</div>
-          <div id="wEfectivo" style="font-weight:700;font-size:1.1rem">$0</div>
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">
+              transferencia retiro
+            </div>
+            <div id="wTransRetiro" style="font-weight: 700">$0</div>
+          </div>
         </div>
-        <div class="widget">
-          <div style="font-size:.8rem;color:#666">transferencia</div>
-          <div id="wTransfer" style="font-weight:700;font-size:1.1rem">$0</div>
+
+        <div class="card">
+          <h3 style="margin: 0.2rem 0">Listado de Pedidos</h3>
+          <div id="ordersListContainer" class="orders-list-container"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin: 0.2rem 0">Últimos 7 días</h3>
+          <canvas id="chartRev" style="width: 100%; height: 220px"></canvas>
+          <canvas
+            id="chartOrders"
+            style="width: 100%; height: 150px; margin-top: 12px"
+          ></canvas>
         </div>
       </div>
     </div>
 
-    <div class="small-widgets">
-        <div class="widget">
-          <div style="font-size:.8rem;color:#666">caja efectivo</div>
-          <div id="wCajaEf" style="font-weight:700;font-size:1.1rem">$0</div>
-        </div>
-        <div class="widget">
-          <div style="font-size:.8rem;color:#666">caja transferencia</div>
-          <div id="wCajaMp" style="font-weight:700;font-size:1.1rem">$0</div>
-        </div>
-      </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const elErr = document.getElementById("error");
+      const dayList = document.getElementById("dayList");
+      const itemsListEl = document.getElementById("itemsList");
+      const topItemsRow = document.getElementById("topItemsRow");
+      const wEfectivo = document.getElementById("wEfectivo");
+      const wTransfer = document.getElementById("wTransfer");
+      const autoChk = document.getElementById("auto");
+      const ordersListContainer = document.getElementById(
+        "ordersListContainer"
+      );
+      const wCajaEf = document.getElementById("wCajaEf");
+      const wCajaMp = document.getElementById("wCajaMp");
 
-    <div class="card">
-      <h3 style="margin:.2rem 0">Listado de Pedidos</h3>
-      <div id="ordersListContainer" class="orders-list-container">
-        </div>
-    </div>
+      let chartRev = null,
+        chartOrders = null;
+      let autoTimer = null;
 
-    <div class="card">
-      <h3 style="margin:.2rem 0">Últimos 7 días</h3>
-      <canvas id="chartRev" style="width:100%;height:220px"></canvas>
-      <canvas id="chartOrders" style="width:100%;height:150px;margin-top:12px"></canvas>
-    </div>
-
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  
-const elErr = document.getElementById('error');
-const dayList = document.getElementById('dayList');
-const itemsListEl = document.getElementById('itemsList');
-const topItemsRow = document.getElementById('topItemsRow');
-const wEfectivo = document.getElementById('wEfectivo');
-const wTransfer = document.getElementById('wTransfer');
-const autoChk = document.getElementById('auto');
-const ordersListContainer = document.getElementById('ordersListContainer');
-const wCajaEf = document.getElementById('wCajaEf');
-const wCajaMp = document.getElementById('wCajaMp');
-
-let chartRev=null, chartOrders=null;
-let autoTimer = null;
-
-// --- FUNCIÓN HELPER ---
-function getLocalDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-document.getElementById('btnLoad').addEventListener('click', loadData);
-document.getElementById('btnToday').addEventListener('click', () => {
-  document.getElementById('day').value = getLocalDateString();
-  loadData();
-});
-autoChk.addEventListener('change', () => {
-  if (autoChk.checked) {
-    autoTimer = setInterval(loadData, 60_000);
-  } else {
-    clearInterval(autoTimer);
-  }
-});
-document.getElementById('exportCsv').addEventListener('click', exportCsv);
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('day').value = getLocalDateString();
-  loadData();
-});
-
-
-/* ======= HELPERS ======= */
-function sumItemsCount(itemsMap) {
-  if (!itemsMap || typeof itemsMap !== 'object') return 0;
-  return Object.values(itemsMap).reduce((s,v)=>s + (Number(v)||0), 0);
-}
-function safeMethodValue(map, keyVariants) {
-  if (!map || typeof map !== 'object') return 0;
-  for (const k of keyVariants) {
-    if (Object.prototype.hasOwnProperty.call(map, k)) return Number(map[k]||0);
-  }
-  return 0;
-}
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#39;');
-}
-
-/* Render functions */
-function renderTopItemsRow(itemsMap, limit = 20) {
-  topItemsRow.innerHTML = '';
-  if (!itemsMap || typeof itemsMap !== 'object' || Object.keys(itemsMap).length === 0) {
-    topItemsRow.innerHTML = '<span class="subtitle">No hay productos</span>';
-    return;
-  }
-  const entries = Object.entries(itemsMap).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,limit);
-  for (const [name, qty] of entries) {
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.innerHTML = `<span style="font-size:.95rem">${escapeHtml(name)}</span><span class="qty">${qty}</span>`;
-    topItemsRow.appendChild(chip);
-  }
-}
-
-function getPaymentBadgeHtml(order) {
-  // 1) Intentar leer algún campo de texto obvio
-  const rawMethod =
-    (order.paymentMethod ||
-     order.metodoPago ||
-     order.medioPago ||
-     order.method ||
-     '').toString().toLowerCase();
-
-  let label = '';
-  let badgeClass = '';
-
-  if (rawMethod.includes('efec')) {
-    label = 'Efectivo';
-    badgeClass = 'is-efectivo';
-  } else if (
-    rawMethod.includes('trans') ||
-    rawMethod.includes('mp') ||
-    rawMethod.includes('mercado')
-  ) {
-    label = 'Transferencia';
-    badgeClass = 'is-transfer';
-  }
-
-  // 2) Si no hay nada claro, mirar montos
-  const cash =
-    Number(order.pagoEfectivo ?? order.efectivo ?? 0) || 0;
-  const mp =
-    Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
-
-  if (!label) {
-    if (cash > 0 && mp > 0) {
-      label = 'Mixto';
-      badgeClass = 'is-mixto';
-    } else if (cash > 0) {
-      label = 'Efectivo';
-      badgeClass = 'is-efectivo';
-    } else if (mp > 0) {
-      label = 'Transferencia';
-      badgeClass = 'is-transfer';
-    }
-  }
-
-  // 3) Si seguimos sin poder inferir, no muestres nada
-  if (!label) return '';
-
-  return `<span class="payment-badge ${badgeClass}">${label}</span>`;
-}
-
-function getOrderTotal(order) {
-  const keys = [
-    'total',
-    'montoTotal',
-    'monto_total',
-    'totalAmount',
-    'importe',
-    'price',
-    'precio'
-  ];
-
-  for (const k of keys) {
-    if (order[k] !== undefined && order[k] !== null) {
-      const n = Number(order[k]);
-      if (!Number.isNaN(n)) return n;
-    }
-  }
-
-  // si no encontramos nada, no mostramos total
-  return null;
-}
-
-function renderOrdersList(orders = []) {
-  ordersListContainer.innerHTML = '';
-  if (!orders || orders.length === 0) {
-    ordersListContainer.innerHTML = '<span class="subtitle">No hay pedidos para este día.</span>';
-    return;
-  }
-
-  for (const order of orders) {
-    const orderEl = document.createElement('div');
-    orderEl.className = 'order-item';
-
-    const time = new Date(order.created).toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false   // formato 24 hs (esto ya lo tenías bien)
-    });
-
-    const direccion = order.direccion || 'No especificado';
-
-    let locationHtml = '';
-    if (direccion.toLowerCase().includes('retiro')) {
-      locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
-    } else {
-      locationHtml = `<span class="order-address is-delivery">${escapeHtml(direccion)}</span>`;
-    }
-
-    const paymentHtml = getPaymentBadgeHtml(order);
-    const total = getOrderTotal(order);
-
-    let itemsHtml = '<ul class="order-products-list">';
-    if (Array.isArray(order.items)) {
-      for (const item of order.items) {
-        itemsHtml += `<li>${escapeHtml(item.name || 'N/A')} <span class="qty">${item.quantity || 1}</span></li>`;
+      // --- FUNCIÓN HELPER ---
+      function getLocalDateString(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
       }
-    } else if (order.items && typeof order.items === 'object') {
-      for (const [name, qty] of Object.entries(order.items)) {
-        itemsHtml += `<li>${escapeHtml(name)} <span class="qty">${qty}</span></li>`;
-      }
-    }
-    itemsHtml += '</ul>';
 
-    const totalHtml = total !== null
-      ? `<div class="order-total-row">
-           <span class="order-total-pill">$${total.toLocaleString('es-AR')}</span>
+      document.getElementById("btnLoad").addEventListener("click", loadData);
+      document.getElementById("btnToday").addEventListener("click", () => {
+        document.getElementById("day").value = getLocalDateString();
+        loadData();
+      });
+      autoChk.addEventListener("change", () => {
+        if (autoChk.checked) {
+          autoTimer = setInterval(loadData, 60_000);
+        } else {
+          clearInterval(autoTimer);
+        }
+      });
+      document.getElementById("exportCsv").addEventListener("click", exportCsv);
+
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("day").value = getLocalDateString();
+        loadData();
+      });
+
+      /* ======= HELPERS ======= */
+      function sumItemsCount(itemsMap) {
+        if (!itemsMap || typeof itemsMap !== "object") return 0;
+        return Object.values(itemsMap).reduce(
+          (s, v) => s + (Number(v) || 0),
+          0
+        );
+      }
+      function safeMethodValue(map, keyVariants) {
+        if (!map || typeof map !== "object") return 0;
+        for (const k of keyVariants) {
+          if (Object.prototype.hasOwnProperty.call(map, k))
+            return Number(map[k] || 0);
+        }
+        return 0;
+      }
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      /* Render functions */
+      function renderTopItemsRow(itemsMap, limit = 20) {
+        topItemsRow.innerHTML = "";
+        if (
+          !itemsMap ||
+          typeof itemsMap !== "object" ||
+          Object.keys(itemsMap).length === 0
+        ) {
+          topItemsRow.innerHTML =
+            '<span class="subtitle">No hay productos</span>';
+          return;
+        }
+        const entries = Object.entries(itemsMap)
+          .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+          .slice(0, limit);
+        for (const [name, qty] of entries) {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.innerHTML = `<span style="font-size:.95rem">${escapeHtml(
+            name
+          )}</span><span class="qty">${qty}</span>`;
+          topItemsRow.appendChild(chip);
+        }
+      }
+
+      function getPaymentBadgeHtml(order) {
+        // 1) Intentar leer algún campo de texto obvio
+        const rawMethod = (
+          order.paymentMethod ||
+          order.metodoPago ||
+          order.medioPago ||
+          order.method ||
+          ""
+        )
+          .toString()
+          .toLowerCase();
+
+        let label = "";
+        let badgeClass = "";
+
+        if (rawMethod.includes("efec")) {
+          label = "Efectivo";
+          badgeClass = "is-efectivo";
+        } else if (
+          rawMethod.includes("trans") ||
+          rawMethod.includes("mp") ||
+          rawMethod.includes("mercado")
+        ) {
+          label = "Transferencia";
+          badgeClass = "is-transfer";
+        }
+
+        // 2) Si no hay nada claro, mirar montos
+        const cash = Number(order.pagoEfectivo ?? order.efectivo ?? 0) || 0;
+        const mp =
+          Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
+
+        if (!label) {
+          if (cash > 0 && mp > 0) {
+            label = "Mixto";
+            badgeClass = "is-mixto";
+          } else if (cash > 0) {
+            label = "Efectivo";
+            badgeClass = "is-efectivo";
+          } else if (mp > 0) {
+            label = "Transferencia";
+            badgeClass = "is-transfer";
+          }
+        }
+
+        // 3) Si seguimos sin poder inferir, no muestres nada
+        if (!label) return "";
+
+        return `<span class="payment-badge ${badgeClass}">${label}</span>`;
+      }
+
+      function getOrderTotal(order) {
+        const keys = [
+          "total",
+          "montoTotal",
+          "monto_total",
+          "totalAmount",
+          "importe",
+          "price",
+          "precio",
+        ];
+
+        for (const k of keys) {
+          if (order[k] !== undefined && order[k] !== null) {
+            const n = Number(order[k]);
+            if (!Number.isNaN(n)) return n;
+          }
+        }
+
+        // si no encontramos nada, no mostramos total
+        return null;
+      }
+
+      function renderOrdersList(orders = []) {
+        ordersListContainer.innerHTML = "";
+        if (!orders || orders.length === 0) {
+          ordersListContainer.innerHTML =
+            '<span class="subtitle">No hay pedidos para este día.</span>';
+          return;
+        }
+
+        for (const order of orders) {
+          const orderEl = document.createElement("div");
+          orderEl.className = "order-item";
+
+          const time = new Date(order.created).toLocaleTimeString("es-AR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false, // formato 24 hs (esto ya lo tenías bien)
+          });
+
+          const direccion = order.direccion || "No especificado";
+
+          let locationHtml = "";
+          if (direccion.toLowerCase().includes("retiro")) {
+            locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
+          } else {
+            locationHtml = `<span class="order-address is-delivery">${escapeHtml(
+              direccion
+            )}</span>`;
+          }
+
+          const paymentHtml = getPaymentBadgeHtml(order);
+          const total = getOrderTotal(order);
+
+          let itemsHtml = '<ul class="order-products-list">';
+          if (Array.isArray(order.items)) {
+            for (const item of order.items) {
+              itemsHtml += `<li>${escapeHtml(
+                item.name || "N/A"
+              )} <span class="qty">${item.quantity || 1}</span></li>`;
+            }
+          } else if (order.items && typeof order.items === "object") {
+            for (const [name, qty] of Object.entries(order.items)) {
+              itemsHtml += `<li>${escapeHtml(
+                name
+              )} <span class="qty">${qty}</span></li>`;
+            }
+          }
+          itemsHtml += "</ul>";
+
+          const totalHtml =
+            total !== null
+              ? `<div class="order-total-row">
+           <span class="order-total-pill">$${total.toLocaleString(
+             "es-AR"
+           )}</span>
          </div>`
-      : '';
+              : "";
 
-    orderEl.innerHTML = `
+          orderEl.innerHTML = `
       <div class="order-header">
         <strong class="order-time">${time}hs</strong>
         <div class="order-header-right">
@@ -284,139 +341,240 @@ function renderOrdersList(orders = []) {
       ${totalHtml}
     `;
 
-    ordersListContainer.appendChild(orderEl);
-  }
-}
-
-
-/* ======= Main load function ======= */
-async function loadData() {
-  elErr.textContent = '';
-  dayList.innerHTML = '';
-  ordersListContainer.innerHTML = '';
-
-  const day = document.getElementById('day').value;
-  if (!day) {
-    elErr.textContent = 'Por favor, selecciona una fecha.';
-    return;
-  }
-  const url = '/api/daily?day=' + day;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      const txt = await res.text().catch(()=>'');
-      throw new Error(`${res.status} ${txt}`);
-    }
-    const data = await res.json();
-
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Leemos los valores del objeto ordersByMode que ya viene de la API
-    const ordersByMode = data.ordersByMode || {};
-    // Usamos la función 'safeMethodValue' para buscar las llaves comunes (ej: "delivery" o "Delivery")
-    const deliveryCount = safeMethodValue(ordersByMode, ['delivery', 'Delivery']);
-    const pickupCount = safeMethodValue(ordersByMode, ['retiro', 'Retiro']);
-
-    const rows = [
-      ['Día', data.day || ''],
-      ['Total', `$${Number(data.revenue || 0).toLocaleString('es-AR')}`],
-      ['Pedidos', data.ordersCount || 0],
-      ['<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Delivery</span>', deliveryCount],
-      ['<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Retiro</span>', pickupCount],
-      ['Productos Vendidos', sumItemsCount(data.itemsCount || {})]
-    ];
-    // --- FIN DE LA MODIFICACIÓN ---
-
-    rows.forEach(([label, val]) => {
-      const div = document.createElement('div');
-      div.className = 'list-row';
-      div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
-      dayList.appendChild(div);
-    });
-
-    const rb = data.revenueByMethod || {};
-    wEfectivo.textContent = `$${(safeMethodValue(rb, ['efectivo','efec','efecivo','cash'])).toLocaleString('es-AR')}`;
-    wTransfer.textContent = `$${(safeMethodValue(rb, ['transferencia','trans','transfer'])).toLocaleString('es-AR')}`;
-
-    const pbm = data.paidByMethod || {};
-    wCajaEf.textContent = `$${safeMethodValue(pbm, ['efectivo','efec','efecivo','cash']).toLocaleString('es-AR')}`;
-    wCajaMp.textContent = `$${safeMethodValue(pbm, ['transferencia','trans','transfer','mp','mercadopago']).toLocaleString('es-AR')}`;
-
-    renderTopItemsRow(data.itemsCount || {}, 20);
-    renderOrdersList(data.orders_detail);
-    await loadRangeAndRender(7);
-
-  } catch (err) {
-    elErr.textContent = 'Error: ' + (err?.message || err);
-    console.error(err);
-  }
-}
-
-/* ======= Range charts (same as before) ======= */
-async function loadRangeAndRender(days=7) {
-  try {
-    const res = await fetch(`/api/daily-range?days=${days}`);
-    if (!res.ok) throw new Error('Range API ' + res.status);
-    const arr = await res.json();
-    const labels = arr.map(r => r.day);
-    const revenues = arr.map(r => r.revenue);
-    const orders = arr.map(r => r.ordersCount);
-
-    if (chartRev) chartRev.destroy();
-    chartRev = new Chart(document.getElementById('chartRev').getContext('2d'), {
-      type: 'line',
-      data: { labels, datasets: [{ label:'total', data:revenues, fill:true, tension:0.25 }] },
-      options: { plugins:{legend:{display:false}}, responsive:true }
-    });
-
-    if (chartOrders) chartOrders.destroy();
-    chartOrders = new Chart(document.getElementById('chartOrders').getContext('2d'), {
-      type: 'bar',
-      data: { labels, datasets: [{ label:'pedidos', data:orders }] },
-      options: { plugins:{legend:{display:false}}, responsive:true }
-    });
-
-  } catch (e) {
-    console.warn('No se pudo cargar rango:', e);
-  }
-}
-
-/* ======= CSV export (same as before) ======= */
-async function exportCsv() {
-  try {
-    const day = document.getElementById('day').value || getLocalDateString();
-    const [range, detail] = await Promise.all([
-      fetch('/api/daily-range?days=7').then(r=>r.ok?r.json(): Promise.reject(r.status)),
-      fetch('/api/daily?day=' + day).then(r=>r.ok? r.json(): null)
-    ]);
-    let csv = 'dia,total,pedidos\n';
-    range.forEach(r => { csv += `${r.day},${r.revenue},${r.ordersCount}\n`; });
-    if (detail) {
-      csv += '\nDETALLE_DIA\n';
-      csv += `dia,${detail.day || day}\n`;
-      csv += `total,${detail.revenue}\n`;
-      csv += `pedidos,${detail.ordersCount}\n`;
-      const ordersByMode = detail.ordersByMode || {};
-      csv += `delivery,${ordersByMode.delivery || 0}\n`;
-      csv += `retiro,${ordersByMode.retiro || 0}\n`;
-      const rb = detail.revenueByMethod || {};
-      csv += `efectivo,${safeMethodValue(rb, ['efectivo','efec','efecivo','cash'])}\n`;
-      csv += `transferencia,${safeMethodValue(rb, ['transferencia','trans','transfer'])}\n`;
-      csv += '\nProductos (nombre,cantidad)\n';
-      const items = detail.itemsCount || {};
-      for (const [k,v] of Object.entries(items)) {
-        csv += `"${String(k).replace(/"/g,'""')}",${v}\n`;
+          ordersListContainer.appendChild(orderEl);
+        }
       }
-    }
-    const blob = new Blob([csv], {type:'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'daily_stats_export.csv'; document.body.appendChild(a); a.click();
-    a.remove(); URL.revokeObjectURL(url);
-  } catch (e) {
-    alert('Error exportando CSV: '+e);
-    console.error(e);
-  }
-}
-</script>
-</body>
+
+      /* ======= Main load function ======= */
+      async function loadData() {
+        elErr.textContent = "";
+        dayList.innerHTML = "";
+        ordersListContainer.innerHTML = "";
+
+        const day = document.getElementById("day").value;
+        if (!day) {
+          elErr.textContent = "Por favor, selecciona una fecha.";
+          return;
+        }
+        const url = "/api/daily?day=" + day;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) {
+            const txt = await res.text().catch(() => "");
+            throw new Error(`${res.status} ${txt}`);
+          }
+          const data = await res.json();
+
+          // ===== TRANSFERENCIA POR MODO =====
+          let transferDelivery = 0;
+          let transferRetiro = 0;
+
+          for (const order of data.orders_detail || []) {
+            const mp =
+              Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
+
+            if (mp <= 0) continue;
+
+            const direccion = (order.direccion || "").toLowerCase();
+
+            if (direccion.includes("retiro")) {
+              transferRetiro += mp;
+            } else {
+              transferDelivery += mp;
+            }
+          }
+
+          // --- INICIO DE LA MODIFICACIÓN ---
+          // Leemos los valores del objeto ordersByMode que ya viene de la API
+          const ordersByMode = data.ordersByMode || {};
+          // Usamos la función 'safeMethodValue' para buscar las llaves comunes (ej: "delivery" o "Delivery")
+          const deliveryCount = safeMethodValue(ordersByMode, [
+            "delivery",
+            "Delivery",
+          ]);
+          const pickupCount = safeMethodValue(ordersByMode, [
+            "retiro",
+            "Retiro",
+          ]);
+
+          const rows = [
+            ["Día", data.day || ""],
+            ["Total", `$${Number(data.revenue || 0).toLocaleString("es-AR")}`],
+            ["Pedidos", data.ordersCount || 0],
+            [
+              '<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Delivery</span>',
+              deliveryCount,
+            ],
+            [
+              '<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Retiro</span>',
+              pickupCount,
+            ],
+            ["Productos Vendidos", sumItemsCount(data.itemsCount || {})],
+            [
+              "Transferencia Delivery",
+              `$${transferDelivery.toLocaleString("es-AR")}`,
+            ],
+            [
+              "Transferencia Retiro",
+              `$${transferRetiro.toLocaleString("es-AR")}`,
+            ],
+          ];
+          // --- FIN DE LA MODIFICACIÓN ---
+
+          rows.forEach(([label, val]) => {
+            const div = document.createElement("div");
+            div.className = "list-row";
+            div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
+            dayList.appendChild(div);
+          });
+
+          const rb = data.revenueByMethod || {};
+          wEfectivo.textContent = `$${safeMethodValue(rb, [
+            "efectivo",
+            "efec",
+            "efecivo",
+            "cash",
+          ]).toLocaleString("es-AR")}`;
+          wTransfer.textContent = `$${safeMethodValue(rb, [
+            "transferencia",
+            "trans",
+            "transfer",
+          ]).toLocaleString("es-AR")}`;
+
+          const pbm = data.paidByMethod || {};
+          wCajaEf.textContent = `$${safeMethodValue(pbm, [
+            "efectivo",
+            "efec",
+            "efecivo",
+            "cash",
+          ]).toLocaleString("es-AR")}`;
+          wCajaMp.textContent = `$${safeMethodValue(pbm, [
+            "transferencia",
+            "trans",
+            "transfer",
+            "mp",
+            "mercadopago",
+          ]).toLocaleString("es-AR")}`;
+
+          document.getElementById(
+            "wTransDelivery"
+          ).textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
+
+          document.getElementById(
+            "wTransRetiro"
+          ).textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
+
+          renderTopItemsRow(data.itemsCount || {}, 20);
+          renderOrdersList(data.orders_detail);
+          await loadRangeAndRender(7);
+        } catch (err) {
+          elErr.textContent = "Error: " + (err?.message || err);
+          console.error(err);
+        }
+      }
+
+      /* ======= Range charts (same as before) ======= */
+      async function loadRangeAndRender(days = 7) {
+        try {
+          const res = await fetch(`/api/daily-range?days=${days}`);
+          if (!res.ok) throw new Error("Range API " + res.status);
+          const arr = await res.json();
+          const labels = arr.map((r) => r.day);
+          const revenues = arr.map((r) => r.revenue);
+          const orders = arr.map((r) => r.ordersCount);
+
+          if (chartRev) chartRev.destroy();
+          chartRev = new Chart(
+            document.getElementById("chartRev").getContext("2d"),
+            {
+              type: "line",
+              data: {
+                labels,
+                datasets: [
+                  { label: "total", data: revenues, fill: true, tension: 0.25 },
+                ],
+              },
+              options: {
+                plugins: { legend: { display: false } },
+                responsive: true,
+              },
+            }
+          );
+
+          if (chartOrders) chartOrders.destroy();
+          chartOrders = new Chart(
+            document.getElementById("chartOrders").getContext("2d"),
+            {
+              type: "bar",
+              data: { labels, datasets: [{ label: "pedidos", data: orders }] },
+              options: {
+                plugins: { legend: { display: false } },
+                responsive: true,
+              },
+            }
+          );
+        } catch (e) {
+          console.warn("No se pudo cargar rango:", e);
+        }
+      }
+
+      /* ======= CSV export (same as before) ======= */
+      async function exportCsv() {
+        try {
+          const day =
+            document.getElementById("day").value || getLocalDateString();
+          const [range, detail] = await Promise.all([
+            fetch("/api/daily-range?days=7").then((r) =>
+              r.ok ? r.json() : Promise.reject(r.status)
+            ),
+            fetch("/api/daily?day=" + day).then((r) =>
+              r.ok ? r.json() : null
+            ),
+          ]);
+          let csv = "dia,total,pedidos\n";
+          range.forEach((r) => {
+            csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
+          });
+          if (detail) {
+            csv += "\nDETALLE_DIA\n";
+            csv += `dia,${detail.day || day}\n`;
+            csv += `total,${detail.revenue}\n`;
+            csv += `pedidos,${detail.ordersCount}\n`;
+            const ordersByMode = detail.ordersByMode || {};
+            csv += `delivery,${ordersByMode.delivery || 0}\n`;
+            csv += `retiro,${ordersByMode.retiro || 0}\n`;
+            const rb = detail.revenueByMethod || {};
+            csv += `efectivo,${safeMethodValue(rb, [
+              "efectivo",
+              "efec",
+              "efecivo",
+              "cash",
+            ])}\n`;
+            csv += `transferencia,${safeMethodValue(rb, [
+              "transferencia",
+              "trans",
+              "transfer",
+            ])}\n`;
+            csv += "\nProductos (nombre,cantidad)\n";
+            const items = detail.itemsCount || {};
+            for (const [k, v] of Object.entries(items)) {
+              csv += `"${String(k).replace(/"/g, '""')}",${v}\n`;
+            }
+          }
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "daily_stats_export.csv";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          alert("Error exportando CSV: " + e);
+          console.error(e);
+        }
+      }
+    </script>
+  </body>
 </html>
