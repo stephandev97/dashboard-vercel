@@ -43,6 +43,7 @@
 
           <div id="topItemsRow" class="top-items-row" aria-hidden="false"></div>
 
+          <!-- Widgets del método de cobro -->
           <div class="small-widgets">
             <div class="widget">
               <div style="font-size: 0.8rem; color: #666">efectivo</div>
@@ -50,9 +51,18 @@
                 $0
               </div>
             </div>
+
             <div class="widget">
               <div style="font-size: 0.8rem; color: #666">transferencia</div>
               <div id="wTransfer" style="font-weight: 700; font-size: 1.1rem">
+                $0
+              </div>
+            </div>
+
+            <!-- ✅ NUEVO: Débito -->
+            <div class="widget">
+              <div style="font-size: 0.8rem; color: #666">débito</div>
+              <div id="wDebito" style="font-weight: 700; font-size: 1.1rem">
                 $0
               </div>
             </div>
@@ -66,6 +76,7 @@
               $0
             </div>
           </div>
+
           <div class="widget">
             <div style="font-size: 0.8rem; color: #666">
               transferencia delivery
@@ -101,22 +112,22 @@
     <script>
       const elErr = document.getElementById("error");
       const dayList = document.getElementById("dayList");
-      const itemsListEl = document.getElementById("itemsList");
       const topItemsRow = document.getElementById("topItemsRow");
+
       const wEfectivo = document.getElementById("wEfectivo");
       const wTransfer = document.getElementById("wTransfer");
+      const wDebito = document.getElementById("wDebito");
+
       const autoChk = document.getElementById("auto");
       const ordersListContainer = document.getElementById(
         "ordersListContainer"
       );
       const wCajaEf = document.getElementById("wCajaEf");
-      const wCajaMp = document.getElementById("wCajaMp");
 
       let chartRev = null,
         chartOrders = null;
       let autoTimer = null;
 
-      // --- FUNCIÓN HELPER ---
       function getLocalDateString(date = new Date()) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -129,6 +140,7 @@
         document.getElementById("day").value = getLocalDateString();
         loadData();
       });
+
       autoChk.addEventListener("change", () => {
         if (autoChk.checked) {
           autoTimer = setInterval(loadData, 60_000);
@@ -136,6 +148,7 @@
           clearInterval(autoTimer);
         }
       });
+
       document.getElementById("exportCsv").addEventListener("click", exportCsv);
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -151,6 +164,7 @@
           0
         );
       }
+
       function safeMethodValue(map, keyVariants) {
         if (!map || typeof map !== "object") return 0;
         for (const k of keyVariants) {
@@ -159,6 +173,7 @@
         }
         return 0;
       }
+
       function escapeHtml(s) {
         return String(s)
           .replaceAll("&", "&amp;")
@@ -168,7 +183,6 @@
           .replaceAll("'", "&#39;");
       }
 
-      /* Render functions */
       function renderTopItemsRow(itemsMap, limit = 20) {
         topItemsRow.innerHTML = "";
         if (
@@ -180,9 +194,11 @@
             '<span class="subtitle">No hay productos</span>';
           return;
         }
+
         const entries = Object.entries(itemsMap)
           .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
           .slice(0, limit);
+
         for (const [name, qty] of entries) {
           const chip = document.createElement("div");
           chip.className = "chip";
@@ -194,7 +210,6 @@
       }
 
       function getPaymentBadgeHtml(order) {
-        // 1) Intentar leer algún campo de texto obvio
         const rawMethod = (
           order.paymentMethod ||
           order.metodoPago ||
@@ -211,6 +226,9 @@
         if (rawMethod.includes("efec")) {
           label = "Efectivo";
           badgeClass = "is-efectivo";
+        } else if (rawMethod.includes("debi")) {
+          label = "Débito";
+          badgeClass = "is-debito";
         } else if (
           rawMethod.includes("trans") ||
           rawMethod.includes("mp") ||
@@ -220,15 +238,18 @@
           badgeClass = "is-transfer";
         }
 
-        // 2) Si no hay nada claro, mirar montos
         const cash = Number(order.pagoEfectivo ?? order.efectivo ?? 0) || 0;
         const mp =
           Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
+        const debito = Number(order.pagoDebito ?? order.debito ?? 0) || 0;
 
         if (!label) {
-          if (cash > 0 && mp > 0) {
+          if ((cash > 0) + (mp > 0) + (debito > 0) >= 2) {
             label = "Mixto";
             badgeClass = "is-mixto";
+          } else if (debito > 0) {
+            label = "Débito";
+            badgeClass = "is-debito";
           } else if (cash > 0) {
             label = "Efectivo";
             badgeClass = "is-efectivo";
@@ -238,9 +259,7 @@
           }
         }
 
-        // 3) Si seguimos sin poder inferir, no muestres nada
         if (!label) return "";
-
         return `<span class="payment-badge ${badgeClass}">${label}</span>`;
       }
 
@@ -254,15 +273,12 @@
           "price",
           "precio",
         ];
-
         for (const k of keys) {
           if (order[k] !== undefined && order[k] !== null) {
             const n = Number(order[k]);
             if (!Number.isNaN(n)) return n;
           }
         }
-
-        // si no encontramos nada, no mostramos total
         return null;
       }
 
@@ -281,7 +297,7 @@
           const time = new Date(order.created).toLocaleTimeString("es-AR", {
             hour: "2-digit",
             minute: "2-digit",
-            hour12: false, // formato 24 hs (esto ya lo tenías bien)
+            hour12: false,
           });
 
           const direccion = order.direccion || "No especificado";
@@ -317,29 +333,28 @@
           const totalHtml =
             total !== null
               ? `<div class="order-total-row">
-           <span class="order-total-pill">$${total.toLocaleString(
-             "es-AR"
-           )}</span>
-         </div>`
+                  <span class="order-total-pill">$${total.toLocaleString(
+                    "es-AR"
+                  )}</span>
+                </div>`
               : "";
 
           orderEl.innerHTML = `
-      <div class="order-header">
-        <strong class="order-time">${time}hs</strong>
-        <div class="order-header-right">
-          ${locationHtml}
-          ${paymentHtml}
-        </div>
-      </div>
-      ${itemsHtml}
-      ${totalHtml}
-    `;
+            <div class="order-header">
+              <strong class="order-time">${time}hs</strong>
+              <div class="order-header-right">
+                ${locationHtml}
+                ${paymentHtml}
+              </div>
+            </div>
+            ${itemsHtml}
+            ${totalHtml}
+          `;
 
           ordersListContainer.appendChild(orderEl);
         }
       }
 
-      /* ======= Main load function ======= */
       async function loadData() {
         elErr.textContent = "";
         dayList.innerHTML = "";
@@ -350,13 +365,16 @@
           elErr.textContent = "Por favor, selecciona una fecha.";
           return;
         }
+
         const url = "/api/daily?day=" + day;
+
         try {
           const res = await fetch(url);
           if (!res.ok) {
             const txt = await res.text().catch(() => "");
             throw new Error(`${res.status} ${txt}`);
           }
+
           const data = await res.json();
 
           // ===== TRANSFERENCIA POR MODO =====
@@ -366,22 +384,14 @@
           for (const order of data.orders_detail || []) {
             const mp =
               Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
-
             if (mp <= 0) continue;
 
             const direccion = (order.direccion || "").toLowerCase();
-
-            if (direccion.includes("retiro")) {
-              transferRetiro += mp;
-            } else {
-              transferDelivery += mp;
-            }
+            if (direccion.includes("retiro")) transferRetiro += mp;
+            else transferDelivery += mp;
           }
 
-          // --- INICIO DE LA MODIFICACIÓN ---
-          // Leemos los valores del objeto ordersByMode que ya viene de la API
           const ordersByMode = data.ordersByMode || {};
-          // Usamos la función 'safeMethodValue' para buscar las llaves comunes (ej: "delivery" o "Delivery")
           const deliveryCount = safeMethodValue(ordersByMode, [
             "delivery",
             "Delivery",
@@ -413,7 +423,6 @@
               `$${transferRetiro.toLocaleString("es-AR")}`,
             ],
           ];
-          // --- FIN DE LA MODIFICACIÓN ---
 
           rows.forEach(([label, val]) => {
             const div = document.createElement("div");
@@ -422,31 +431,29 @@
             dayList.appendChild(div);
           });
 
+          // ✅ Totales por método
           const rb = data.revenueByMethod || {};
-          wEfectivo.textContent = `$${safeMethodValue(rb, [
-            "efectivo",
-            "efec",
-            "efecivo",
-            "cash",
-          ]).toLocaleString("es-AR")}`;
-          wTransfer.textContent = `$${safeMethodValue(rb, [
+          const efectivo = safeMethodValue(rb, ["efectivo", "efec", "cash"]);
+          const transferencia = safeMethodValue(rb, [
             "transferencia",
             "trans",
             "transfer",
-          ]).toLocaleString("es-AR")}`;
+            "mp",
+          ]);
+          const debito = safeMethodValue(rb, ["debito", "debit"]);
 
+          wEfectivo.textContent = `$${efectivo.toLocaleString("es-AR")}`;
+          wTransfer.textContent = `$${transferencia.toLocaleString("es-AR")}`;
+          wDebito.textContent = `$${debito.toLocaleString("es-AR")}`;
+
+          // otros widgets
           const pbm = data.paidByMethod || {};
-          wCajaEf.textContent = `$${safeMethodValue(pbm, [
-            "efectivo",
-            "efec",
-            "efecivo",
-            "cash",
-          ]).toLocaleString("es-AR")}`;
+          const cajaEf = safeMethodValue(pbm, ["efectivo", "efec", "cash"]);
+          wCajaEf.textContent = `$${cajaEf.toLocaleString("es-AR")}`;
 
           document.getElementById(
             "wTransDelivery"
           ).textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
-
           document.getElementById(
             "wTransRetiro"
           ).textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
@@ -460,11 +467,11 @@
         }
       }
 
-      /* ======= Range charts (same as before) ======= */
       async function loadRangeAndRender(days = 7) {
         try {
           const res = await fetch(`/api/daily-range?days=${days}`);
           if (!res.ok) throw new Error("Range API " + res.status);
+
           const arr = await res.json();
           const labels = arr.map((r) => r.day);
           const revenues = arr.map((r) => r.revenue);
@@ -505,7 +512,6 @@
         }
       }
 
-      /* ======= CSV export (same as before) ======= */
       async function exportCsv() {
         try {
           const day =
@@ -518,36 +524,43 @@
               r.ok ? r.json() : null
             ),
           ]);
+
           let csv = "dia,total,pedidos\n";
           range.forEach((r) => {
             csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
           });
+
           if (detail) {
             csv += "\nDETALLE_DIA\n";
             csv += `dia,${detail.day || day}\n`;
             csv += `total,${detail.revenue}\n`;
             csv += `pedidos,${detail.ordersCount}\n`;
+
             const ordersByMode = detail.ordersByMode || {};
             csv += `delivery,${ordersByMode.delivery || 0}\n`;
             csv += `retiro,${ordersByMode.retiro || 0}\n`;
+
             const rb = detail.revenueByMethod || {};
             csv += `efectivo,${safeMethodValue(rb, [
               "efectivo",
               "efec",
-              "efecivo",
               "cash",
             ])}\n`;
             csv += `transferencia,${safeMethodValue(rb, [
               "transferencia",
               "trans",
               "transfer",
+              "mp",
             ])}\n`;
+            csv += `debito,${safeMethodValue(rb, ["debito", "debit"])}\n`;
+
             csv += "\nProductos (nombre,cantidad)\n";
             const items = detail.itemsCount || {};
             for (const [k, v] of Object.entries(items)) {
               csv += `"${String(k).replace(/"/g, '""')}",${v}\n`;
             }
           }
+
           const blob = new Blob([csv], { type: "text/csv" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
