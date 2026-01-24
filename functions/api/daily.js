@@ -10,7 +10,12 @@ export async function onRequestGet({ request, env }) {
     const pb = new PocketBase(env.PB_URL);
     pb.autoCancellation(false);
 
-    let dailyRecord = await getDailyStatRecordSmart({ dateKey, pb });
+    let dailyRecord = null;
+    try {
+      dailyRecord = await getDailyStatRecordSmart({ dateKey, pb });
+    } catch {
+      dailyRecord = null;
+    }
     if (!dailyRecord) {
       dailyRecord = {
         day: dateKey,
@@ -55,15 +60,22 @@ export async function onRequestGet({ request, env }) {
       { headers: { "content-type": "application/json; charset=utf-8" } }
     );
   } catch (e) {
-    return new Response(
-      JSON.stringify({
-        error: "Error interno en la API",
-        details: e?.message ?? String(e),
-      }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json; charset=utf-8" },
-      }
-    );
+    const fallback = {
+      day: new Date().toISOString().slice(0, 10),
+      revenue: 0,
+      ordersCount: 0,
+      itemsCount: {},
+      paidByMethod: {},
+      revenueByMethod: {},
+      ordersByMethod: {},
+      ordersByMode: {},
+      deliveryByAddress: {},
+      orders_detail: [],
+      error: "fallback",
+      details: e?.message ?? String(e),
+    };
+    return new Response(JSON.stringify(fallback), {
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
   }
 }

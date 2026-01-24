@@ -262,6 +262,32 @@
         if (!label) return "";
         return `<span class="payment-badge ${badgeClass}">${label}</span>`;
       }
+ 
+      function getCopiedBadgeHtml(order) {
+        const rawMode = (
+          order?.mode ??
+          order?.modo ??
+          order?.orderMode ??
+          ""
+        )
+          .toString()
+          .toLowerCase();
+        const isDelivery = rawMode.includes("delivery");
+        if (!isDelivery) return "";
+
+        const v = order?.copied;
+        const isTrue =
+          v === true ||
+          v === 1 ||
+          (typeof v === "string" && v.toLowerCase() === "true");
+        const isFalse =
+          v === false ||
+          v === 0 ||
+          (typeof v === "string" && v.toLowerCase() === "false");
+        if (isTrue) return `<span class="status-badge is-sent">Enviado</span>`;
+        if (isFalse) return `<span class="status-badge is-pending">Pendiente</span>`;
+        return "";
+      }
 
       function getOrderTotal(order) {
         const keys = [
@@ -312,6 +338,7 @@
           }
 
           const paymentHtml = getPaymentBadgeHtml(order);
+          const copiedHtml = getCopiedBadgeHtml(order);
           const total = getOrderTotal(order);
 
           let itemsHtml = '<ul class="order-products-list">';
@@ -341,11 +368,11 @@
 
           orderEl.innerHTML = `
             <div class="order-header">
-              <strong class="order-time">${time}hs</strong>
-              <div class="order-header-right">
+              <div class="order-header-left">
+                <strong class="order-time">${time}hs</strong>
                 ${locationHtml}
-                ${paymentHtml}
               </div>
+              <div class="order-header-right">${copiedHtml}${paymentHtml}</div>
             </div>
             ${itemsHtml}
             ${totalHtml}
