@@ -549,16 +549,9 @@
           ]);
 
           const rows = [
-            ["Día", formatFullSpanishDate(data.day || "")],
             ["Pedidos", data.ordersCount || 0],
-            [
-              '<span class="list-indent">Delivery</span>',
-              deliveryCount,
-            ],
-            [
-              '<span class="list-indent">Retiro</span>',
-              pickupCount,
-            ]
+            ['<span class="list-indent">Delivery</span>', deliveryCount],
+            ['<span class="list-indent">Retiro</span>', pickupCount]
           ];
 
           rows.forEach(([label, val]) => {

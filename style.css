@@ -323,6 +323,7 @@ details#productsAccordion summary {
   align-items: center;
   justify-content: space-between;
   gap: .5rem;
+  font-size: .87rem;
 }
 .chev {
   display: inline-block;
