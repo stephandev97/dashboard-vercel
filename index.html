@@ -9,29 +9,22 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css"
     />
     <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <header>
-      <h1 style="margin: 0; font-size: 1.05rem">Dashboard — Daily Stats</h1>
-    </header>
+    
 
     <div class="container">
       <div class="controls">
-        <input type="date" id="day" />
-        <button id="btnLoad">Cargar</button>
-        <button id="btnToday">Hoy</button>
-        <label
-          style="
-            margin-left: auto;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-          "
-        >
-          <span style="font-size: 0.9rem">Auto-refresh</span>
-          <input id="auto" type="checkbox" />
-        </label>
-        <button id="exportCsv">Exportar CSV</button>
+        <span id="dayLabel" class="day-label"></span>
+        <div class="nav-arrows">
+          <button id="prevDay" title="Día anterior" class="icon-btn" aria-label="Día anterior">‹</button>
+          <button id="nextDay" title="Día siguiente" class="icon-btn" aria-label="Día siguiente">›</button>
+          <button id="goToday" title="Ir a hoy" class="icon-btn" aria-label="Ir a hoy">↻</button>
+        </div>
+        <input type="date" id="day" style="display:none" />
       </div>
 
       <div id="error"></div>
@@ -41,92 +34,116 @@
           <h3 style="margin: 0.2rem 0">Resumen del día</h3>
           <div id="dayList"></div>
 
-          <div id="topItemsRow" class="top-items-row" aria-hidden="false"></div>
+          <details id="productsAccordion">
+            <summary class="accordion-summary"><span>Productos vendidos</span><span class="chev">▾</span></summary>
+            <div id="topItemsRow" class="top-items-row"></div>
+          </details>
 
           <!-- Widgets del método de cobro -->
           <div class="small-widgets">
             <div class="widget">
               <div style="font-size: 0.8rem; color: #666">efectivo</div>
-              <div id="wEfectivo" style="font-weight: 700; font-size: 1.1rem">
+              <div id="wEfectivo" class="widget-value">
                 $0
               </div>
             </div>
 
             <div class="widget">
               <div style="font-size: 0.8rem; color: #666">transferencia</div>
-              <div id="wTransfer" style="font-weight: 700; font-size: 1.1rem">
+              <div id="wTransfer" class="widget-value">
                 $0
               </div>
             </div>
-
-            <!-- ✅ NUEVO: Débito -->
             <div class="widget">
               <div style="font-size: 0.8rem; color: #666">débito</div>
-              <div id="wDebito" style="font-weight: 700; font-size: 1.1rem">
+              <div id="wDebito" class="widget-value">
+                $0
+              </div>
+            </div>
+            <div class="widget w-total">
+              <div style="font-size: 0.8rem; color: #666">total</div>
+              <div id="wTotal" class="widget-value">
                 $0
               </div>
             </div>
           </div>
         </div>
 
-        <div class="small-widgets">
-          <div class="widget">
-            <div style="font-size: 0.8rem; color: #666">caja efectivo</div>
-            <div id="wCajaEf" style="font-weight: 700; font-size: 1.1rem">
-              $0
-            </div>
+      <div id="transferModalOverlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal">
+          <div class="modal-header">
+            <h4 class="modal-title">Detalle de Transferencias</h4>
+            <button id="transferModalClose" title="Cerrar">✕</button>
           </div>
-
-          <div class="widget">
-            <div style="font-size: 0.8rem; color: #666">
-              transferencia delivery
+          <div class="modal-body">
+            <div class="list-row">
+              <strong>Delivery</strong>
+              <span id="mTransferDelivery" class="subtitle">$0</span>
             </div>
-            <div id="wTransDelivery" style="font-weight: 700">$0</div>
-          </div>
-
-          <div class="widget">
-            <div style="font-size: 0.8rem; color: #666">
-              transferencia retiro
+            <div class="list-row">
+              <strong>Retiro</strong>
+              <span id="mTransferRetiro" class="subtitle">$0</span>
             </div>
-            <div id="wTransRetiro" style="font-weight: 700">$0</div>
           </div>
         </div>
-
+      </div>
         <div class="card">
           <h3 style="margin: 0.2rem 0">Listado de Pedidos</h3>
           <div id="ordersListContainer" class="orders-list-container"></div>
         </div>
 
-        <div class="card">
-          <h3 style="margin: 0.2rem 0">Últimos 7 días</h3>
-          <canvas id="chartRev" style="width: 100%; height: 220px"></canvas>
-          <canvas
-            id="chartOrders"
-            style="width: 100%; height: 150px; margin-top: 12px"
-          ></canvas>
-        </div>
+        
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div id="topShade" class="top-shade"></div>
+    <button id="scrollTopBtn" class="float-top-btn icon-btn" title="Subir" aria-label="Subir">↑</button>
+ 
+    
     <script>
       const elErr = document.getElementById("error");
       const dayList = document.getElementById("dayList");
       const topItemsRow = document.getElementById("topItemsRow");
+      const productsAccordion = document.getElementById("productsAccordion");
+      let lastItemsCount = {};
 
       const wEfectivo = document.getElementById("wEfectivo");
       const wTransfer = document.getElementById("wTransfer");
       const wDebito = document.getElementById("wDebito");
+      const wTotal = document.getElementById("wTotal");
 
-      const autoChk = document.getElementById("auto");
       const ordersListContainer = document.getElementById(
         "ordersListContainer"
       );
-      const wCajaEf = document.getElementById("wCajaEf");
+      const transferModalOverlay = document.getElementById("transferModalOverlay");
+      const transferModalClose = document.getElementById("transferModalClose");
+      const mTransferDelivery = document.getElementById("mTransferDelivery");
+      const mTransferRetiro = document.getElementById("mTransferRetiro");
+      const transferWidget = document.getElementById("wTransfer");
+      if (transferWidget && transferModalOverlay) {
+        transferWidget.closest(".widget")?.addEventListener("click", () => {
+          transferModalOverlay.setAttribute("aria-hidden", "false");
+        });
+      }
+      if (transferModalClose && transferModalOverlay) {
+        transferModalClose.addEventListener("click", () => {
+          transferModalOverlay.setAttribute("aria-hidden", "true");
+        });
+        transferModalOverlay.addEventListener("click", (e) => {
+          if (e.target === transferModalOverlay) {
+            transferModalOverlay.setAttribute("aria-hidden", "true");
+          }
+        });
+      }
+      if (productsAccordion) {
+        productsAccordion.addEventListener("toggle", () => {
+          if (productsAccordion.open) {
+            renderTopItemsRow(lastItemsCount, 20);
+          }
+        });
+      }
 
-      let chartRev = null,
-        chartOrders = null;
-      let autoTimer = null;
+      
 
       function getLocalDateString(date = new Date()) {
         const year = date.getFullYear();
@@ -134,27 +151,97 @@
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
       }
+      function businessToday(now = new Date()) {
+        const dt = new Date(now);
+        if (dt.getHours() < 3) dt.setDate(dt.getDate() - 1);
+        return dt;
+      }
+      function formatFullSpanishDate(dateStr) {
+        const dt = parseInputDate(dateStr);
+        if (!Number.isFinite(dt.getTime())) return String(dateStr || "");
+        let s = dt.toLocaleDateString("es-AR", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        s = s.replace(/,\s*/, " ");
+        return s
+          .split(" ")
+          .map((w) => (w.toLowerCase() === "de" ? "de" : w.charAt(0).toUpperCase() + w.slice(1)))
+          .join(" ");
+      }
+      function updateDayLabel() {
+        const v = document.getElementById("day").value;
+        document.getElementById("dayLabel").textContent = formatFullSpanishDate(
+          v || getLocalDateString(businessToday())
+        );
+      }
+      function parseInputDate(value) {
+        if (!value || typeof value !== "string") return new Date();
+        const parts = value.split("-");
+        const y = Number(parts[0]);
+        const m = Number(parts[1]);
+        const d = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d))
+          return new Date();
+        return new Date(y, m - 1, d);
+      }
 
-      document.getElementById("btnLoad").addEventListener("click", loadData);
-      document.getElementById("btnToday").addEventListener("click", () => {
-        document.getElementById("day").value = getLocalDateString();
-        loadData();
-      });
-
-      autoChk.addEventListener("change", () => {
-        if (autoChk.checked) {
-          autoTimer = setInterval(loadData, 60_000);
-        } else {
-          clearInterval(autoTimer);
-        }
-      });
-
-      document.getElementById("exportCsv").addEventListener("click", exportCsv);
+      const prevBtn = document.getElementById("prevDay");
+      if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+          const input = document.getElementById("day");
+          const current = input.value || getLocalDateString();
+          const dt = parseInputDate(current);
+          dt.setDate(dt.getDate() - 1);
+          input.value = getLocalDateString(dt);
+          updateDayLabel();
+          loadData();
+        });
+      }
+      const nextBtn = document.getElementById("nextDay");
+      if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+          const input = document.getElementById("day");
+          const current = input.value || getLocalDateString();
+          const dt = parseInputDate(current);
+          dt.setDate(dt.getDate() + 1);
+          const todayStr = getLocalDateString(businessToday());
+          const nextStr = getLocalDateString(dt);
+          input.value = nextStr > todayStr ? todayStr : nextStr;
+          updateDayLabel();
+          loadData();
+        });
+      }
+      const goTodayBtn = document.getElementById("goToday");
+      if (goTodayBtn) {
+        goTodayBtn.addEventListener("click", () => {
+          const input = document.getElementById("day");
+          input.value = getLocalDateString(businessToday());
+          updateDayLabel();
+          loadData();
+        });
+      }
 
       document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("day").value = getLocalDateString();
+        document.getElementById("day").value = getLocalDateString(businessToday());
+        updateDayLabel();
         loadData();
       });
+ 
+      const scrollTopBtn = document.getElementById("scrollTopBtn");
+      const topShade = document.getElementById("topShade");
+      if (scrollTopBtn) {
+        window.addEventListener("scroll", () => {
+          const show = window.scrollY > 600;
+          scrollTopBtn.classList.toggle("show", show);
+          if (topShade) topShade.classList.toggle("show", show);
+        });
+        scrollTopBtn.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
 
       /* ======= HELPERS ======= */
       function sumItemsCount(itemsMap) {
@@ -183,8 +270,21 @@
           .replaceAll("'", "&#39;");
       }
 
+      function parsePagoDetalle(s) {
+        if (!s || typeof s !== "string") return { ef: 0, mp: 0 };
+        const efMatch = s.match(/EF\s*\$?\s*([\d.,]+)/i);
+        const mpMatch = s.match(/MP\s*\$?\s*([\d.,]+)/i);
+        const toNum = (str) =>
+          Number(String(str).replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(/,/g, "."));
+        return {
+          ef: efMatch ? toNum(efMatch[1]) || 0 : 0,
+          mp: mpMatch ? toNum(mpMatch[1]) || 0 : 0,
+        };
+      }
+
       function renderTopItemsRow(itemsMap, limit = 20) {
         topItemsRow.innerHTML = "";
+        if (productsAccordion && !productsAccordion.open) return;
         if (
           !itemsMap ||
           typeof itemsMap !== "object" ||
@@ -292,6 +392,8 @@
       function getOrderTotal(order) {
         const keys = [
           "total",
+          "pago",
+          "pago_total",
           "montoTotal",
           "monto_total",
           "totalAmount",
@@ -301,8 +403,14 @@
         ];
         for (const k of keys) {
           if (order[k] !== undefined && order[k] !== null) {
-            const n = Number(order[k]);
-            if (!Number.isNaN(n)) return n;
+            const v = order[k];
+            if (typeof v === "number") {
+              if (!Number.isNaN(v)) return v;
+            } else if (typeof v === "string") {
+              const cleaned = v.replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(/,/g, ".");
+              const n = Number(cleaned);
+              if (!Number.isNaN(n)) return n;
+            }
           }
         }
         return null;
@@ -326,10 +434,16 @@
             hour12: false,
           });
 
-          const direccion = order.direccion || "No especificado";
+          const direccion = order.address || order.direccion || "No especificado";
+          const modeLower = (
+            order.mode ||
+            order.modo ||
+            order.orderMode ||
+            ""
+          ).toString().toLowerCase();
 
           let locationHtml = "";
-          if (direccion.toLowerCase().includes("retiro")) {
+          if (modeLower.includes("retiro")) {
             locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
           } else {
             locationHtml = `<span class="order-address is-delivery">${escapeHtml(
@@ -366,13 +480,14 @@
                 </div>`
               : "";
 
+          const addressRowHtml = `<div class="order-address-row">${locationHtml}</div>`;
           orderEl.innerHTML = `
             <div class="order-header">
-              <div class="order-header-left">
+              <div class="order-main-row">
                 <strong class="order-time">${time}hs</strong>
-                ${locationHtml}
+                <div class="order-badges">${copiedHtml}${paymentHtml}</div>
               </div>
-              <div class="order-header-right">${copiedHtml}${paymentHtml}</div>
+              ${addressRowHtml}
             </div>
             ${itemsHtml}
             ${totalHtml}
@@ -407,15 +522,20 @@
           // ===== TRANSFERENCIA POR MODO =====
           let transferDelivery = 0;
           let transferRetiro = 0;
+          let cambioTotal = 0;
 
           for (const order of data.orders_detail || []) {
             const mp =
               Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
             if (mp <= 0) continue;
-
-            const direccion = (order.direccion || "").toLowerCase();
-            if (direccion.includes("retiro")) transferRetiro += mp;
-            else transferDelivery += mp;
+            const modeLower = (
+              order.mode ||
+              order.modo ||
+              order.orderMode ||
+              ""
+            ).toString().toLowerCase();
+            if (modeLower.includes("retiro")) transferRetiro += mp;
+            else if (modeLower.includes("delivery")) transferDelivery += mp;
           }
 
           const ordersByMode = data.ordersByMode || {};
@@ -429,26 +549,16 @@
           ]);
 
           const rows = [
-            ["Día", data.day || ""],
-            ["Total", `$${Number(data.revenue || 0).toLocaleString("es-AR")}`],
+            ["Día", formatFullSpanishDate(data.day || "")],
             ["Pedidos", data.ordersCount || 0],
             [
-              '<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Delivery</span>',
+              '<span class="list-indent">Delivery</span>',
               deliveryCount,
             ],
             [
-              '<span style="padding-left: 1.2rem; font-size: 0.9em;">↳ Retiro</span>',
+              '<span class="list-indent">Retiro</span>',
               pickupCount,
-            ],
-            ["Productos Vendidos", sumItemsCount(data.itemsCount || {})],
-            [
-              "Transferencia Delivery",
-              `$${transferDelivery.toLocaleString("es-AR")}`,
-            ],
-            [
-              "Transferencia Retiro",
-              `$${transferRetiro.toLocaleString("es-AR")}`,
-            ],
+            ]
           ];
 
           rows.forEach(([label, val]) => {
@@ -458,150 +568,60 @@
             dayList.appendChild(div);
           });
 
-          // ✅ Totales por método
-          const rb = data.revenueByMethod || {};
-          const efectivo = safeMethodValue(rb, ["efectivo", "efec", "cash"]);
-          const transferencia = safeMethodValue(rb, [
-            "transferencia",
-            "trans",
-            "transfer",
-            "mp",
-          ]);
-          const debito = safeMethodValue(rb, ["debito", "debit"]);
+          // ✅ Totales por método (incluye mixtos) calculados desde orders_detail
+          let efectivoLocal = 0,
+            transferenciaLocal = 0,
+            debitoLocal = 0;
+          for (const order of data.orders_detail || []) {
+            const total = getOrderTotal(order);
+            const parsed = parsePagoDetalle(order.pagoDetalle || order.detallePago || "");
+            const mp =
+              Number(order.pagoMp ?? order.transferencia ?? order.mp ?? parsed.mp ?? 0) || 0;
+            const deb =
+              Number(order.pagoDebito ?? order.debito ?? 0) || 0;
+            const ef =
+              Number(order.pagoEfectivo ?? order.efectivo ?? parsed.ef ?? 0) || 0;
+            const restante = Number.isFinite(total) ? Math.max(0, total - mp - deb) : ef;
+            const appliedCash = Math.min(ef, restante);
+            const cambio = Math.max(0, ef - appliedCash);
+            efectivoLocal += appliedCash;
+            transferenciaLocal += mp;
+            debitoLocal += deb;
+            cambioTotal += cambio;
+          }
 
-          wEfectivo.textContent = `$${efectivo.toLocaleString("es-AR")}`;
-          wTransfer.textContent = `$${transferencia.toLocaleString("es-AR")}`;
-          wDebito.textContent = `$${debito.toLocaleString("es-AR")}`;
+          wEfectivo.textContent = `$${efectivoLocal.toLocaleString("es-AR")}`;
+          wTransfer.textContent = `$${transferenciaLocal.toLocaleString("es-AR")}`;
+          wDebito.textContent = `$${debitoLocal.toLocaleString("es-AR")}`;
+          if (wTotal) {
+            const totalWidgets = efectivoLocal + transferenciaLocal + debitoLocal;
+            wTotal.textContent = `$${totalWidgets.toLocaleString("es-AR")}`;
+          }
+          if (mTransferDelivery) {
+            mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
+          }
+          if (mTransferRetiro) {
+            mTransferRetiro.textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
+          }
+          
 
           // otros widgets
-          const pbm = data.paidByMethod || {};
-          const cajaEf = safeMethodValue(pbm, ["efectivo", "efec", "cash"]);
-          wCajaEf.textContent = `$${cajaEf.toLocaleString("es-AR")}`;
+          // const pbm = data.paidByMethod || {};
+          // Caja efectivo/transferencia eliminado
 
-          document.getElementById(
-            "wTransDelivery"
-          ).textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
-          document.getElementById(
-            "wTransRetiro"
-          ).textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
+          // Widgets de transferencia por modo eliminados
 
-          renderTopItemsRow(data.itemsCount || {}, 20);
+          lastItemsCount = data.itemsCount || {};
+          renderTopItemsRow(lastItemsCount, 20);
           renderOrdersList(data.orders_detail);
-          await loadRangeAndRender(7);
         } catch (err) {
           elErr.textContent = "Error: " + (err?.message || err);
           console.error(err);
         }
       }
 
-      async function loadRangeAndRender(days = 7) {
-        try {
-          const res = await fetch(`/api/daily-range?days=${days}`);
-          if (!res.ok) throw new Error("Range API " + res.status);
+      
 
-          const arr = await res.json();
-          const labels = arr.map((r) => r.day);
-          const revenues = arr.map((r) => r.revenue);
-          const orders = arr.map((r) => r.ordersCount);
-
-          if (chartRev) chartRev.destroy();
-          chartRev = new Chart(
-            document.getElementById("chartRev").getContext("2d"),
-            {
-              type: "line",
-              data: {
-                labels,
-                datasets: [
-                  { label: "total", data: revenues, fill: true, tension: 0.25 },
-                ],
-              },
-              options: {
-                plugins: { legend: { display: false } },
-                responsive: true,
-              },
-            }
-          );
-
-          if (chartOrders) chartOrders.destroy();
-          chartOrders = new Chart(
-            document.getElementById("chartOrders").getContext("2d"),
-            {
-              type: "bar",
-              data: { labels, datasets: [{ label: "pedidos", data: orders }] },
-              options: {
-                plugins: { legend: { display: false } },
-                responsive: true,
-              },
-            }
-          );
-        } catch (e) {
-          console.warn("No se pudo cargar rango:", e);
-        }
-      }
-
-      async function exportCsv() {
-        try {
-          const day =
-            document.getElementById("day").value || getLocalDateString();
-          const [range, detail] = await Promise.all([
-            fetch("/api/daily-range?days=7").then((r) =>
-              r.ok ? r.json() : Promise.reject(r.status)
-            ),
-            fetch("/api/daily?day=" + day).then((r) =>
-              r.ok ? r.json() : null
-            ),
-          ]);
-
-          let csv = "dia,total,pedidos\n";
-          range.forEach((r) => {
-            csv += `${r.day},${r.revenue},${r.ordersCount}\n`;
-          });
-
-          if (detail) {
-            csv += "\nDETALLE_DIA\n";
-            csv += `dia,${detail.day || day}\n`;
-            csv += `total,${detail.revenue}\n`;
-            csv += `pedidos,${detail.ordersCount}\n`;
-
-            const ordersByMode = detail.ordersByMode || {};
-            csv += `delivery,${ordersByMode.delivery || 0}\n`;
-            csv += `retiro,${ordersByMode.retiro || 0}\n`;
-
-            const rb = detail.revenueByMethod || {};
-            csv += `efectivo,${safeMethodValue(rb, [
-              "efectivo",
-              "efec",
-              "cash",
-            ])}\n`;
-            csv += `transferencia,${safeMethodValue(rb, [
-              "transferencia",
-              "trans",
-              "transfer",
-              "mp",
-            ])}\n`;
-            csv += `debito,${safeMethodValue(rb, ["debito", "debit"])}\n`;
-
-            csv += "\nProductos (nombre,cantidad)\n";
-            const items = detail.itemsCount || {};
-            for (const [k, v] of Object.entries(items)) {
-              csv += `"${String(k).replace(/"/g, '""')}",${v}\n`;
-            }
-          }
-
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "daily_stats_export.csv";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-        } catch (e) {
-          alert("Error exportando CSV: " + e);
-          console.error(e);
-        }
-      }
     </script>
   </body>
 </html>
