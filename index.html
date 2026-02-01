@@ -9,6 +9,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css"
     />
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,6 +24,7 @@
           <button id="prevDay" title="Día anterior" class="icon-btn" aria-label="Día anterior">‹</button>
           <button id="nextDay" title="Día siguiente" class="icon-btn" aria-label="Día siguiente">›</button>
           <button id="goToday" title="Ir a hoy" class="icon-btn" aria-label="Ir a hoy">↻</button>
+          <button id="testNotify" title="Probar notificación" class="icon-btn" aria-label="Probar notificación">🔔</button>
         </div>
         <input type="date" id="day" style="display:none" />
       </div>
@@ -106,6 +108,7 @@
       const topItemsRow = document.getElementById("topItemsRow");
       const productsAccordion = document.getElementById("productsAccordion");
       let lastItemsCount = {};
+      let lastOrdersCount = null;
 
       const wEfectivo = document.getElementById("wEfectivo");
       const wTransfer = document.getElementById("wTransfer");
@@ -119,6 +122,7 @@
       const transferModalClose = document.getElementById("transferModalClose");
       const mTransferDelivery = document.getElementById("mTransferDelivery");
       const mTransferRetiro = document.getElementById("mTransferRetiro");
+      const testNotifyBtn = document.getElementById("testNotify");
       const transferWidget = document.getElementById("wTransfer");
       if (transferWidget && transferModalOverlay) {
         transferWidget.closest(".widget")?.addEventListener("click", () => {
@@ -139,6 +143,21 @@
         productsAccordion.addEventListener("toggle", () => {
           if (productsAccordion.open) {
             renderTopItemsRow(lastItemsCount, 20);
+          }
+        });
+      }
+      if (testNotifyBtn) {
+        testNotifyBtn.addEventListener("click", async () => {
+          try {
+            const r = await fetch("/api/notify-telegram", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ text: "Prueba de notificación desde dashboard" }),
+            });
+            const j = await r.json().catch(() => ({}));
+            elErr.textContent = j?.ok ? "Notificación enviada" : "Error al enviar notificación";
+          } catch {
+            elErr.textContent = "Error al enviar notificación";
           }
         });
       }
@@ -228,6 +247,9 @@
         document.getElementById("day").value = getLocalDateString(businessToday());
         updateDayLabel();
         loadData();
+        setInterval(() => {
+          loadData();
+        }, 20000);
       });
  
       const scrollTopBtn = document.getElementById("scrollTopBtn");
@@ -416,6 +438,31 @@
         return null;
       }
 
+      let lastOrdersDetail = [];
+      function buildOrderNotifyText(order) {
+        const rawMode = (order?.mode ?? order?.modo ?? order?.orderMode ?? "").toString().toLowerCase();
+        const isRetiro = rawMode.includes("retiro");
+        const mode = isRetiro ? "Retiro" : "Delivery";
+        const direccion = order?.address || order?.direccion || "";
+        const total = getOrderTotal(order);
+        const msgTotal = Number.isFinite(total) ? `$${total.toLocaleString("es-AR")}` : "N/A";
+        let itemsArr = [];
+        if (Array.isArray(order?.items)) {
+          for (const it of order.items) {
+            const name = String(it?.name ?? "N/A");
+            const qty = Number(it?.quantity ?? 1);
+            itemsArr.push(`${name} x${qty}`);
+          }
+        } else if (order?.items && typeof order.items === "object") {
+          for (const [name, qty] of Object.entries(order.items)) {
+            itemsArr.push(`${String(name)} x${Number(qty ?? 1)}`);
+          }
+        }
+        itemsArr = itemsArr.slice(0, 8);
+        const productosLine = itemsArr.length > 0 ? `\nProductos: ${itemsArr.join(", ")}` : "";
+        const direccionLine = !isRetiro && direccion ? `\nDirección: ${direccion}` : "";
+        return `\nModo: ${mode}${direccionLine}${productosLine}\nTotal: ${msgTotal}`;
+      }
       function renderOrdersList(orders = []) {
         ordersListContainer.innerHTML = "";
         if (!orders || orders.length === 0) {
@@ -423,10 +470,12 @@
             '<span class="subtitle">No hay pedidos para este día.</span>';
           return;
         }
-
-        for (const order of orders) {
+        lastOrdersDetail = orders;
+        for (let i = 0; i < orders.length; i++) {
+          const order = orders[i];
           const orderEl = document.createElement("div");
           orderEl.className = "order-item";
+          orderEl.dataset.idx = String(i);
 
           const time = new Date(order.created).toLocaleTimeString("es-AR", {
             hour: "2-digit",
@@ -607,6 +656,21 @@
           lastItemsCount = data.itemsCount || {};
           renderTopItemsRow(lastItemsCount, 20);
           renderOrdersList(data.orders_detail);
+          
+          if (typeof data.ordersCount === "number") {
+            if (lastOrdersCount === null) {
+              lastOrdersCount = data.ordersCount;
+            } else if (data.ordersCount > lastOrdersCount) {
+              lastOrdersCount = data.ordersCount;
+              const newest = Array.isArray(data.orders_detail) ? data.orders_detail[0] || null : null;
+              const text = buildOrderNotifyText(newest || {});
+              fetch("/api/notify-telegram", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ text }),
+              }).catch(() => {});
+            }
+          }
         } catch (err) {
           elErr.textContent = "Error: " + (err?.message || err);
           console.error(err);
