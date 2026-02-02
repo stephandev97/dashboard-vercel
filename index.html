@@ -180,7 +180,6 @@
         if (!Number.isFinite(dt.getTime())) return String(dateStr || "");
         let s = dt.toLocaleDateString("es-AR", {
           weekday: "long",
-          year: "numeric",
           month: "long",
           day: "numeric",
         });
@@ -437,6 +436,34 @@
         }
         return null;
       }
+      function collectFlavors(it) {
+        if (!it || typeof it !== "object") return "";
+        const keys = ["sabores", "flavors", "gustos"];
+        let list = [];
+        for (const k of keys) {
+          const v = it[k];
+          if (!v) continue;
+          if (Array.isArray(v)) {
+            for (const f of v) {
+              const s = String(f || "").trim();
+              if (s) list.push(s);
+            }
+          } else if (typeof v === "string") {
+            const parts = String(v)
+              .split(/[,\|\/\-]+/)
+              .map((s) => s.trim())
+              .filter(Boolean);
+            list.push(...parts);
+          } else if (typeof v === "object") {
+            for (const name of Object.keys(v)) {
+              const s = String(name || "").trim();
+              if (s) list.push(s);
+            }
+          }
+        }
+        const uniq = Array.from(new Set(list)).slice(0, 6);
+        return uniq.join(", ");
+      }
 
       let lastOrdersDetail = [];
       function buildOrderNotifyText(order) {
@@ -507,9 +534,12 @@
           let itemsHtml = '<ul class="order-products-list">';
           if (Array.isArray(order.items)) {
             for (const item of order.items) {
-              itemsHtml += `<li>${escapeHtml(
-                item.name || "N/A"
-              )} <span class="qty">${item.quantity || 1}</span></li>`;
+              const flavors = collectFlavors(item);
+              const nameHtml = `${escapeHtml(item.name || "N/A")}`;
+              const flavorsHtml = flavors
+                ? `<div class="order-flavors">${escapeHtml(flavors)}</div>`
+                : "";
+              itemsHtml += `<li><div class="item-left"><div class="item-name">${nameHtml}</div>${flavorsHtml}</div><span class="qty">${item.quantity || 1}</span></li>`;
             }
           } else if (order.items && typeof order.items === "object") {
             for (const [name, qty] of Object.entries(order.items)) {
