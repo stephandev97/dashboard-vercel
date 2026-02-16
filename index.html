@@ -1,75 +1,89 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Dashboard Daily Stats</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css"
-    />
-    <link rel="stylesheet" href="style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    
 
-    <div class="container">
-      <div class="controls">
-        <span id="dayLabel" class="day-label"></span>
-        <div class="nav-arrows">
-          <button id="prevDay" title="Día anterior" class="icon-btn" aria-label="Día anterior">‹</button>
-          <button id="nextDay" title="Día siguiente" class="icon-btn" aria-label="Día siguiente">›</button>
-          <button id="goToday" title="Ir a hoy" class="icon-btn" aria-label="Ir a hoy">↻</button>
-          <button id="testNotify" title="Probar notificación" class="icon-btn" aria-label="Probar notificación">🔔</button>
-        </div>
-        <input type="date" id="day" style="display:none" />
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard Daily Stats</title>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+
+  <div class="container">
+    <div class="controls">
+      <span id="dayLabel" class="day-label"></span>
+      <div class="nav-arrows">
+        <button id="prevDay" title="Día anterior" class="icon-btn" aria-label="Día anterior">‹</button>
+        <button id="nextDay" title="Día siguiente" class="icon-btn" aria-label="Día siguiente">›</button>
+        <button id="goToday" title="Ir a hoy" class="icon-btn" aria-label="Ir a hoy">↻</button>
+        <button id="calcBtn" title="Calculadora" class="icon-btn" aria-label="Calculadora">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="16" y1="14" x2="16" y2="18"></line>
+            <path d="M16 10h.01"></path>
+            <path d="M12 10h.01"></path>
+            <path d="M8 10h.01"></path>
+            <path d="M12 14h.01"></path>
+            <path d="M8 14h.01"></path>
+            <path d="M12 18h.01"></path>
+            <path d="M8 18h.01"></path>
+          </svg>
+        </button>
       </div>
+      <input type="date" id="day" style="display:none" />
+    </div>
 
-      <div id="error"></div>
+    <div id="error"></div>
 
-      <div class="grid">
-        <div class="card" id="cardDay">
-          <h3 style="margin: 0.2rem 0">Resumen del día</h3>
-          <div id="dayList"></div>
+    <div class="grid">
+      <div class="card" id="cardDay">
+        <h3 style="margin: 0.2rem 0">Resumen del día</h3>
+        <div id="dayList"></div>
 
-          <details id="productsAccordion">
-            <summary class="accordion-summary"><span>Productos vendidos</span><span class="chev">▾</span></summary>
-            <div id="topItemsRow" class="top-items-row"></div>
-          </details>
+        <details id="productsAccordion">
+          <summary class="accordion-summary"><span>Productos vendidos</span><span class="chev">▾</span></summary>
+          <div id="topItemsRow" class="top-items-row"></div>
+        </details>
 
-          <!-- Widgets del método de cobro -->
-          <div class="small-widgets">
-            <div class="widget">
-              <div style="font-size: 0.8rem; color: #666">efectivo</div>
-              <div id="wEfectivo" class="widget-value">
-                $0
-              </div>
+        <!-- Widgets del método de cobro -->
+        <div class="small-widgets">
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">efectivo</div>
+            <div id="wEfectivo" class="widget-value">
+              $0
             </div>
+          </div>
 
-            <div class="widget">
-              <div style="font-size: 0.8rem; color: #666">transferencia</div>
-              <div id="wTransfer" class="widget-value">
-                $0
-              </div>
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">transferencia</div>
+            <div id="wTransfer" class="widget-value">
+              $0
             </div>
-            <div class="widget">
-              <div style="font-size: 0.8rem; color: #666">débito</div>
-              <div id="wDebito" class="widget-value">
-                $0
-              </div>
+          </div>
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">débito</div>
+            <div id="wDebito" class="widget-value">
+              $0
             </div>
-            <div class="widget w-total">
-              <div style="font-size: 0.8rem; color: #666">total</div>
-              <div id="wTotal" class="widget-value">
-                $0
-              </div>
+          </div>
+          <div class="widget w-total">
+            <div style="font-size: 0.8rem; color: #666">total</div>
+            <div id="wTotal" class="widget-value">
+              $0
             </div>
           </div>
         </div>
+      </div>
 
       <div id="transferModalOverlay" class="modal-overlay" aria-hidden="true">
         <div class="modal">
@@ -89,478 +103,579 @@
           </div>
         </div>
       </div>
-        <div class="card">
-          <h3 style="margin: 0.2rem 0">Listado de Pedidos</h3>
-          <div id="ordersListContainer" class="orders-list-container"></div>
+
+      <div id="calcModalOverlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal">
+          <div class="modal-header">
+            <h4 class="modal-title">Calculadora Delivery</h4>
+            <button id="calcModalClose" title="Cerrar">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="calc-row">
+              <div class="input-group">
+                <label for="calcHours">Horas</label>
+                <input type="number" id="calcHours" placeholder="0" step="any" />
+              </div>
+              <div class="input-group">
+                <label for="calcHourValue">Costo Hora</label>
+                <div class="input-wrapper">
+                  <span class="prefix">$</span>
+                  <input type="number" id="calcHourValue" placeholder="0" step="any" />
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-row">
+              <div class="input-group">
+                <label for="calcOrders">Pedidos</label>
+                <input type="number" id="calcOrders" placeholder="0" step="any" />
+              </div>
+              <div class="input-group">
+                <label for="calcOrderValue">Costo Pedido</label>
+                <div class="input-wrapper">
+                  <span class="prefix">$</span>
+                  <input type="number" id="calcOrderValue" placeholder="0" step="any" />
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-divider"></div>
+
+            <div class="calc-result">
+              <span>Total a pagar</span>
+              <strong id="calcTotal">$0</strong>
+            </div>
+
+            <button id="calcActionBtn" class="action-btn">Calcular</button>
+          </div>
         </div>
-
-        
       </div>
+      <div class="card">
+        <h3 style="margin: 0.2rem 0">Listado de Pedidos</h3>
+        <div id="ordersListContainer" class="orders-list-container"></div>
+      </div>
+
+
     </div>
+  </div>
 
-    <div id="topShade" class="top-shade"></div>
-    <button id="scrollTopBtn" class="float-top-btn icon-btn" title="Subir" aria-label="Subir">↑</button>
- 
-    
-    <script>
-      const elErr = document.getElementById("error");
-      const dayList = document.getElementById("dayList");
-      const topItemsRow = document.getElementById("topItemsRow");
-      const productsAccordion = document.getElementById("productsAccordion");
-      let lastItemsCount = {};
-      let lastOrdersCount = null;
+  <div id="topShade" class="top-shade"></div>
+  <button id="scrollTopBtn" class="float-top-btn icon-btn" title="Subir" aria-label="Subir">↑</button>
 
-      const wEfectivo = document.getElementById("wEfectivo");
-      const wTransfer = document.getElementById("wTransfer");
-      const wDebito = document.getElementById("wDebito");
-      const wTotal = document.getElementById("wTotal");
 
-      const ordersListContainer = document.getElementById(
-        "ordersListContainer"
-      );
-      const transferModalOverlay = document.getElementById("transferModalOverlay");
-      const transferModalClose = document.getElementById("transferModalClose");
-      const mTransferDelivery = document.getElementById("mTransferDelivery");
-      const mTransferRetiro = document.getElementById("mTransferRetiro");
-      const testNotifyBtn = document.getElementById("testNotify");
-      const transferWidget = document.getElementById("wTransfer");
-      if (transferWidget && transferModalOverlay) {
-        transferWidget.closest(".widget")?.addEventListener("click", () => {
-          transferModalOverlay.setAttribute("aria-hidden", "false");
-        });
-      }
-      if (transferModalClose && transferModalOverlay) {
-        transferModalClose.addEventListener("click", () => {
+  <script>
+    const elErr = document.getElementById("error");
+    const dayList = document.getElementById("dayList");
+    const topItemsRow = document.getElementById("topItemsRow");
+    const productsAccordion = document.getElementById("productsAccordion");
+    let lastItemsCount = {};
+    let lastOrdersCount = null;
+
+    const wEfectivo = document.getElementById("wEfectivo");
+    const wTransfer = document.getElementById("wTransfer");
+    const wDebito = document.getElementById("wDebito");
+    const wTotal = document.getElementById("wTotal");
+
+    const ordersListContainer = document.getElementById(
+      "ordersListContainer"
+    );
+    const transferModalOverlay = document.getElementById("transferModalOverlay");
+    const transferModalClose = document.getElementById("transferModalClose");
+    const mTransferDelivery = document.getElementById("mTransferDelivery");
+    const mTransferRetiro = document.getElementById("mTransferRetiro");
+    const testNotifyBtn = document.getElementById("testNotify");
+    const transferWidget = document.getElementById("wTransfer");
+    if (transferWidget && transferModalOverlay) {
+      transferWidget.closest(".widget")?.addEventListener("click", () => {
+        transferModalOverlay.setAttribute("aria-hidden", "false");
+      });
+    }
+    if (transferModalClose && transferModalOverlay) {
+      transferModalClose.addEventListener("click", () => {
+        transferModalOverlay.setAttribute("aria-hidden", "true");
+      });
+      transferModalOverlay.addEventListener("click", (e) => {
+        if (e.target === transferModalOverlay) {
           transferModalOverlay.setAttribute("aria-hidden", "true");
-        });
-        transferModalOverlay.addEventListener("click", (e) => {
-          if (e.target === transferModalOverlay) {
-            transferModalOverlay.setAttribute("aria-hidden", "true");
-          }
-        });
-      }
-      if (productsAccordion) {
-        productsAccordion.addEventListener("toggle", () => {
-          if (productsAccordion.open) {
-            renderTopItemsRow(lastItemsCount, 20);
-          }
-        });
-      }
-      if (testNotifyBtn) {
-        testNotifyBtn.addEventListener("click", async () => {
-          try {
-            const r = await fetch("/api/notify-telegram", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ text: "Prueba de notificación desde dashboard" }),
-            });
-            const j = await r.json().catch(() => ({}));
-            elErr.textContent = j?.ok ? "Notificación enviada" : "Error al enviar notificación";
-          } catch {
-            elErr.textContent = "Error al enviar notificación";
-          }
-        });
-      }
+        }
+      });
+    }
+    if (productsAccordion) {
+      productsAccordion.addEventListener("toggle", () => {
+        if (productsAccordion.open) {
+          renderTopItemsRow(lastItemsCount, 20);
+        }
+      });
+    }
+    if (testNotifyBtn) {
+      testNotifyBtn.addEventListener("click", async () => {
+        try {
+          const r = await fetch("/api/notify-telegram", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ text: "Prueba de notificación desde dashboard" }),
+          });
+          const j = await r.json().catch(() => ({}));
+          elErr.textContent = j?.ok ? "Notificación enviada" : "Error al enviar notificación";
+        } catch {
+          elErr.textContent = "Error al enviar notificación";
+        }
+      });
+    }
 
-      
+    /* ======= CALCULATOR LOGIC ======= */
+    const calcBtn = document.getElementById("calcBtn");
+    const calcModalOverlay = document.getElementById("calcModalOverlay");
+    const calcModalClose = document.getElementById("calcModalClose");
+    const calcActionBtn = document.getElementById("calcActionBtn");
 
-      function getLocalDateString(date = new Date()) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      }
-      function businessToday(now = new Date()) {
-        const dt = new Date(now);
-        if (dt.getHours() < 3) dt.setDate(dt.getDate() - 1);
-        return dt;
-      }
-      function formatFullSpanishDate(dateStr) {
-        const dt = parseInputDate(dateStr);
-        if (!Number.isFinite(dt.getTime())) return String(dateStr || "");
-        let s = dt.toLocaleDateString("es-AR", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        });
-        s = s.replace(/,\s*/, " ");
-        return s
-          .split(" ")
-          .map((w) => (w.toLowerCase() === "de" ? "de" : w.charAt(0).toUpperCase() + w.slice(1)))
-          .join(" ");
-      }
-      function updateDayLabel() {
-        const v = document.getElementById("day").value;
-        document.getElementById("dayLabel").textContent = formatFullSpanishDate(
-          v || getLocalDateString(businessToday())
-        );
-      }
-      function parseInputDate(value) {
-        if (!value || typeof value !== "string") return new Date();
-        const parts = value.split("-");
-        const y = Number(parts[0]);
-        const m = Number(parts[1]);
-        const d = Number(parts[2]);
-        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d))
-          return new Date();
-        return new Date(y, m - 1, d);
-      }
+    const inpHours = document.getElementById("calcHours");
+    const inpHourValue = document.getElementById("calcHourValue");
+    const inpOrders = document.getElementById("calcOrders");
+    const inpOrderValue = document.getElementById("calcOrderValue");
+    const elCalcTotal = document.getElementById("calcTotal");
 
-      const prevBtn = document.getElementById("prevDay");
-      if (prevBtn) {
-        prevBtn.addEventListener("click", () => {
-          const input = document.getElementById("day");
-          const current = input.value || getLocalDateString();
-          const dt = parseInputDate(current);
-          dt.setDate(dt.getDate() - 1);
-          input.value = getLocalDateString(dt);
-          updateDayLabel();
-          loadData();
-        });
-      }
-      const nextBtn = document.getElementById("nextDay");
-      if (nextBtn) {
-        nextBtn.addEventListener("click", () => {
-          const input = document.getElementById("day");
-          const current = input.value || getLocalDateString();
-          const dt = parseInputDate(current);
-          dt.setDate(dt.getDate() + 1);
-          const todayStr = getLocalDateString(businessToday());
-          const nextStr = getLocalDateString(dt);
-          input.value = nextStr > todayStr ? todayStr : nextStr;
-          updateDayLabel();
-          loadData();
-        });
-      }
-      const goTodayBtn = document.getElementById("goToday");
-      if (goTodayBtn) {
-        goTodayBtn.addEventListener("click", () => {
-          const input = document.getElementById("day");
-          input.value = getLocalDateString(businessToday());
-          updateDayLabel();
-          loadData();
-        });
-      }
+    // Set default values if needed, or load from local storage
+    const savedHourVal = localStorage.getItem("calc_hour_val");
+    inpHourValue.value = savedHourVal !== null ? savedHourVal : "4000";
 
-      document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("day").value = getLocalDateString(businessToday());
+    const savedOrderVal = localStorage.getItem("calc_order_val");
+    inpOrderValue.value = savedOrderVal !== null ? savedOrderVal : "1000";
+
+    function openCalc() {
+      if (calcModalOverlay) calcModalOverlay.setAttribute("aria-hidden", "false");
+    }
+    function closeCalc() {
+      if (calcModalOverlay) calcModalOverlay.setAttribute("aria-hidden", "true");
+    }
+    function doCalculation() {
+      const h = parseFloat(inpHours.value) || 0;
+      const vh = parseFloat(inpHourValue.value) || 0;
+      const o = parseFloat(inpOrders.value) || 0;
+      const vo = parseFloat(inpOrderValue.value) || 0;
+
+      const total = (h * vh) + (o * vo);
+      elCalcTotal.textContent = `$${total.toLocaleString("es-AR")}`;
+
+      // Save persistent values
+      localStorage.setItem("calc_hour_val", vh);
+      localStorage.setItem("calc_order_val", vo);
+    }
+
+    if (calcBtn) calcBtn.addEventListener("click", openCalc);
+    if (calcModalClose) calcModalClose.addEventListener("click", closeCalc);
+    if (calcModalOverlay) {
+      calcModalOverlay.addEventListener("click", (e) => {
+        if (e.target === calcModalOverlay) closeCalc();
+      });
+    }
+    if (calcActionBtn) {
+      calcActionBtn.addEventListener("click", doCalculation);
+    }
+    // Also calculate on input change for better UX?
+    [inpHours, inpHourValue, inpOrders, inpOrderValue].forEach(el => {
+      if (el) el.addEventListener("input", doCalculation);
+    });
+
+
+
+    function getLocalDateString(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+    function businessToday(now = new Date()) {
+      const dt = new Date(now);
+      if (dt.getHours() < 3) dt.setDate(dt.getDate() - 1);
+      return dt;
+    }
+    function formatFullSpanishDate(dateStr) {
+      const dt = parseInputDate(dateStr);
+      if (!Number.isFinite(dt.getTime())) return String(dateStr || "");
+      let s = dt.toLocaleDateString("es-AR", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+      s = s.replace(/,\s*/, " ");
+      return s
+        .split(" ")
+        .map((w) => (w.toLowerCase() === "de" ? "de" : w.charAt(0).toUpperCase() + w.slice(1)))
+        .join(" ");
+    }
+    function updateDayLabel() {
+      const v = document.getElementById("day").value;
+      document.getElementById("dayLabel").textContent = formatFullSpanishDate(
+        v || getLocalDateString(businessToday())
+      );
+    }
+    function parseInputDate(value) {
+      if (!value || typeof value !== "string") return new Date();
+      const parts = value.split("-");
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      const d = Number(parts[2]);
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d))
+        return new Date();
+      return new Date(y, m - 1, d);
+    }
+
+    const prevBtn = document.getElementById("prevDay");
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        const input = document.getElementById("day");
+        const current = input.value || getLocalDateString();
+        const dt = parseInputDate(current);
+        dt.setDate(dt.getDate() - 1);
+        input.value = getLocalDateString(dt);
         updateDayLabel();
         loadData();
-        setInterval(() => {
-          loadData();
-        }, 20000);
       });
- 
-      const scrollTopBtn = document.getElementById("scrollTopBtn");
-      const topShade = document.getElementById("topShade");
-      if (scrollTopBtn) {
-        window.addEventListener("scroll", () => {
-          const show = window.scrollY > 600;
-          scrollTopBtn.classList.toggle("show", show);
-          if (topShade) topShade.classList.toggle("show", show);
-        });
-        scrollTopBtn.addEventListener("click", () => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        });
+    }
+    const nextBtn = document.getElementById("nextDay");
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        const input = document.getElementById("day");
+        const current = input.value || getLocalDateString();
+        const dt = parseInputDate(current);
+        dt.setDate(dt.getDate() + 1);
+        const todayStr = getLocalDateString(businessToday());
+        const nextStr = getLocalDateString(dt);
+        input.value = nextStr > todayStr ? todayStr : nextStr;
+        updateDayLabel();
+        loadData();
+      });
+    }
+    const goTodayBtn = document.getElementById("goToday");
+    if (goTodayBtn) {
+      goTodayBtn.addEventListener("click", () => {
+        const input = document.getElementById("day");
+        input.value = getLocalDateString(businessToday());
+        updateDayLabel();
+        loadData();
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("day").value = getLocalDateString(businessToday());
+      updateDayLabel();
+      loadData();
+      setInterval(() => {
+        loadData();
+      }, 20000);
+    });
+
+    const scrollTopBtn = document.getElementById("scrollTopBtn");
+    const topShade = document.getElementById("topShade");
+    if (scrollTopBtn) {
+      window.addEventListener("scroll", () => {
+        const show = window.scrollY > 600;
+        scrollTopBtn.classList.toggle("show", show);
+        if (topShade) topShade.classList.toggle("show", show);
+      });
+      scrollTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    /* ======= HELPERS ======= */
+    function sumItemsCount(itemsMap) {
+      if (!itemsMap || typeof itemsMap !== "object") return 0;
+      return Object.values(itemsMap).reduce(
+        (s, v) => s + (Number(v) || 0),
+        0
+      );
+    }
+
+    function safeMethodValue(map, keyVariants) {
+      if (!map || typeof map !== "object") return 0;
+      for (const k of keyVariants) {
+        if (Object.prototype.hasOwnProperty.call(map, k))
+          return Number(map[k] || 0);
+      }
+      return 0;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function parsePagoDetalle(s) {
+      if (!s || typeof s !== "string") return { ef: 0, mp: 0 };
+      const efMatch = s.match(/EF\s*\$?\s*([\d.,]+)/i);
+      const mpMatch = s.match(/MP\s*\$?\s*([\d.,]+)/i);
+      const toNum = (str) =>
+        Number(String(str).replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(/,/g, "."));
+      return {
+        ef: efMatch ? toNum(efMatch[1]) || 0 : 0,
+        mp: mpMatch ? toNum(mpMatch[1]) || 0 : 0,
+      };
+    }
+
+    function renderTopItemsRow(itemsMap, limit = 20) {
+      topItemsRow.innerHTML = "";
+      if (productsAccordion && !productsAccordion.open) return;
+      if (
+        !itemsMap ||
+        typeof itemsMap !== "object" ||
+        Object.keys(itemsMap).length === 0
+      ) {
+        topItemsRow.innerHTML =
+          '<span class="subtitle">No hay productos</span>';
+        return;
       }
 
-      /* ======= HELPERS ======= */
-      function sumItemsCount(itemsMap) {
-        if (!itemsMap || typeof itemsMap !== "object") return 0;
-        return Object.values(itemsMap).reduce(
-          (s, v) => s + (Number(v) || 0),
-          0
-        );
+      const entries = Object.entries(itemsMap)
+        .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+        .slice(0, limit);
+
+      for (const [name, qty] of entries) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<span style="font-size:.95rem">${escapeHtml(
+          name
+        )}</span><span class="qty">${qty}</span>`;
+        topItemsRow.appendChild(chip);
+      }
+    }
+
+    function getPaymentBadgeHtml(order) {
+      const rawMethod = (
+        order.paymentMethod ||
+        order.metodoPago ||
+        order.medioPago ||
+        order.method ||
+        ""
+      )
+        .toString()
+        .toLowerCase();
+
+      let label = "";
+      let badgeClass = "";
+
+      if (rawMethod.includes("efec")) {
+        label = "Efectivo";
+        badgeClass = "is-efectivo";
+      } else if (rawMethod.includes("debi")) {
+        label = "Débito";
+        badgeClass = "is-debito";
+      } else if (
+        rawMethod.includes("trans") ||
+        rawMethod.includes("mp") ||
+        rawMethod.includes("mercado")
+      ) {
+        label = "Transferencia";
+        badgeClass = "is-transfer";
       }
 
-      function safeMethodValue(map, keyVariants) {
-        if (!map || typeof map !== "object") return 0;
-        for (const k of keyVariants) {
-          if (Object.prototype.hasOwnProperty.call(map, k))
-            return Number(map[k] || 0);
-        }
-        return 0;
-      }
+      const cash = Number(order.pagoEfectivo ?? order.efectivo ?? 0) || 0;
+      const mp =
+        Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
+      const debito = Number(order.pagoDebito ?? order.debito ?? 0) || 0;
 
-      function escapeHtml(s) {
-        return String(s)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#39;");
-      }
-
-      function parsePagoDetalle(s) {
-        if (!s || typeof s !== "string") return { ef: 0, mp: 0 };
-        const efMatch = s.match(/EF\s*\$?\s*([\d.,]+)/i);
-        const mpMatch = s.match(/MP\s*\$?\s*([\d.,]+)/i);
-        const toNum = (str) =>
-          Number(String(str).replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(/,/g, "."));
-        return {
-          ef: efMatch ? toNum(efMatch[1]) || 0 : 0,
-          mp: mpMatch ? toNum(mpMatch[1]) || 0 : 0,
-        };
-      }
-
-      function renderTopItemsRow(itemsMap, limit = 20) {
-        topItemsRow.innerHTML = "";
-        if (productsAccordion && !productsAccordion.open) return;
-        if (
-          !itemsMap ||
-          typeof itemsMap !== "object" ||
-          Object.keys(itemsMap).length === 0
-        ) {
-          topItemsRow.innerHTML =
-            '<span class="subtitle">No hay productos</span>';
-          return;
-        }
-
-        const entries = Object.entries(itemsMap)
-          .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
-          .slice(0, limit);
-
-        for (const [name, qty] of entries) {
-          const chip = document.createElement("div");
-          chip.className = "chip";
-          chip.innerHTML = `<span style="font-size:.95rem">${escapeHtml(
-            name
-          )}</span><span class="qty">${qty}</span>`;
-          topItemsRow.appendChild(chip);
-        }
-      }
-
-      function getPaymentBadgeHtml(order) {
-        const rawMethod = (
-          order.paymentMethod ||
-          order.metodoPago ||
-          order.medioPago ||
-          order.method ||
-          ""
-        )
-          .toString()
-          .toLowerCase();
-
-        let label = "";
-        let badgeClass = "";
-
-        if (rawMethod.includes("efec")) {
-          label = "Efectivo";
-          badgeClass = "is-efectivo";
-        } else if (rawMethod.includes("debi")) {
+      if (!label) {
+        if ((cash > 0) + (mp > 0) + (debito > 0) >= 2) {
+          label = "Mixto";
+          badgeClass = "is-mixto";
+        } else if (debito > 0) {
           label = "Débito";
           badgeClass = "is-debito";
-        } else if (
-          rawMethod.includes("trans") ||
-          rawMethod.includes("mp") ||
-          rawMethod.includes("mercado")
-        ) {
+        } else if (cash > 0) {
+          label = "Efectivo";
+          badgeClass = "is-efectivo";
+        } else if (mp > 0) {
           label = "Transferencia";
           badgeClass = "is-transfer";
         }
-
-        const cash = Number(order.pagoEfectivo ?? order.efectivo ?? 0) || 0;
-        const mp =
-          Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
-        const debito = Number(order.pagoDebito ?? order.debito ?? 0) || 0;
-
-        if (!label) {
-          if ((cash > 0) + (mp > 0) + (debito > 0) >= 2) {
-            label = "Mixto";
-            badgeClass = "is-mixto";
-          } else if (debito > 0) {
-            label = "Débito";
-            badgeClass = "is-debito";
-          } else if (cash > 0) {
-            label = "Efectivo";
-            badgeClass = "is-efectivo";
-          } else if (mp > 0) {
-            label = "Transferencia";
-            badgeClass = "is-transfer";
-          }
-        }
-
-        if (!label) return "";
-        return `<span class="payment-badge ${badgeClass}">${label}</span>`;
-      }
- 
-      function getCopiedBadgeHtml(order) {
-        const rawMode = (
-          order?.mode ??
-          order?.modo ??
-          order?.orderMode ??
-          ""
-        )
-          .toString()
-          .toLowerCase();
-        const isDelivery = rawMode.includes("delivery");
-        if (!isDelivery) return "";
-
-        const v = order?.copied;
-        const isTrue =
-          v === true ||
-          v === 1 ||
-          (typeof v === "string" && v.toLowerCase() === "true");
-        const isFalse =
-          v === false ||
-          v === 0 ||
-          (typeof v === "string" && v.toLowerCase() === "false");
-        if (isTrue) return `<span class="status-badge is-sent">Enviado</span>`;
-        if (isFalse) return `<span class="status-badge is-pending">Pendiente</span>`;
-        return "";
       }
 
-      function getOrderTotal(order) {
-        const keys = [
-          "total",
-          "pago",
-          "pago_total",
-          "montoTotal",
-          "monto_total",
-          "totalAmount",
-          "importe",
-          "price",
-          "precio",
-        ];
-        for (const k of keys) {
-          if (order[k] !== undefined && order[k] !== null) {
-            const v = order[k];
-            if (typeof v === "number") {
-              if (!Number.isNaN(v)) return v;
-            } else if (typeof v === "string") {
-              const cleaned = v.replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(/,/g, ".");
-              const n = Number(cleaned);
-              if (!Number.isNaN(n)) return n;
-            }
-          }
-        }
-        return null;
-      }
-      function collectFlavors(it) {
-        if (!it || typeof it !== "object") return "";
-        const keys = ["sabores", "flavors", "gustos"];
-        let list = [];
-        for (const k of keys) {
-          const v = it[k];
-          if (!v) continue;
-          if (Array.isArray(v)) {
-            for (const f of v) {
-              const s = String(f || "").trim();
-              if (s) list.push(s);
-            }
+      if (!label) return "";
+      return `<span class="payment-badge ${badgeClass}">${label}</span>`;
+    }
+
+    function getCopiedBadgeHtml(order) {
+      const rawMode = (
+        order?.mode ??
+        order?.modo ??
+        order?.orderMode ??
+        ""
+      )
+        .toString()
+        .toLowerCase();
+      const isDelivery = rawMode.includes("delivery");
+      if (!isDelivery) return "";
+
+      const v = order?.copied;
+      const isTrue =
+        v === true ||
+        v === 1 ||
+        (typeof v === "string" && v.toLowerCase() === "true");
+      const isFalse =
+        v === false ||
+        v === 0 ||
+        (typeof v === "string" && v.toLowerCase() === "false");
+      if (isTrue) return `<span class="status-badge is-sent">Enviado</span>`;
+      if (isFalse) return `<span class="status-badge is-pending">Pendiente</span>`;
+      return "";
+    }
+
+    function getOrderTotal(order) {
+      const keys = [
+        "total",
+        "pago",
+        "pago_total",
+        "montoTotal",
+        "monto_total",
+        "totalAmount",
+        "importe",
+        "price",
+        "precio",
+      ];
+      for (const k of keys) {
+        if (order[k] !== undefined && order[k] !== null) {
+          const v = order[k];
+          if (typeof v === "number") {
+            if (!Number.isNaN(v)) return v;
           } else if (typeof v === "string") {
-            const parts = String(v)
-              .split(/[,\|\/\-]+/)
-              .map((s) => s.trim())
-              .filter(Boolean);
-            list.push(...parts);
-          } else if (typeof v === "object") {
-            for (const name of Object.keys(v)) {
-              const s = String(name || "").trim();
-              if (s) list.push(s);
-            }
+            const cleaned = v.replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(/,/g, ".");
+            const n = Number(cleaned);
+            if (!Number.isNaN(n)) return n;
           }
         }
-        const uniq = Array.from(new Set(list)).slice(0, 6);
-        return uniq.join(", ");
       }
+      return null;
+    }
+    function collectFlavors(it) {
+      if (!it || typeof it !== "object") return "";
+      const keys = ["sabores", "flavors", "gustos"];
+      let list = [];
+      for (const k of keys) {
+        const v = it[k];
+        if (!v) continue;
+        if (Array.isArray(v)) {
+          for (const f of v) {
+            const s = String(f || "").trim();
+            if (s) list.push(s);
+          }
+        } else if (typeof v === "string") {
+          const parts = String(v)
+            .split(/[,\|\/\-]+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          list.push(...parts);
+        } else if (typeof v === "object") {
+          for (const name of Object.keys(v)) {
+            const s = String(name || "").trim();
+            if (s) list.push(s);
+          }
+        }
+      }
+      const uniq = Array.from(new Set(list)).slice(0, 6);
+      return uniq.join(", ");
+    }
 
-      let lastOrdersDetail = [];
-      function buildOrderNotifyText(order) {
-        const rawMode = (order?.mode ?? order?.modo ?? order?.orderMode ?? "").toString().toLowerCase();
-        const isRetiro = rawMode.includes("retiro");
-        const mode = isRetiro ? "Retiro" : "Delivery";
-        const direccion = order?.address || order?.direccion || "";
+    let lastOrdersDetail = [];
+    function buildOrderNotifyText(order) {
+      const rawMode = (order?.mode ?? order?.modo ?? order?.orderMode ?? "").toString().toLowerCase();
+      const isRetiro = rawMode.includes("retiro");
+      const mode = isRetiro ? "Retiro" : "Delivery";
+      const direccion = order?.address || order?.direccion || "";
+      const total = getOrderTotal(order);
+      const msgTotal = Number.isFinite(total) ? `$${total.toLocaleString("es-AR")}` : "N/A";
+      let itemsArr = [];
+      if (Array.isArray(order?.items)) {
+        for (const it of order.items) {
+          const name = String(it?.name ?? "N/A");
+          const qty = Number(it?.quantity ?? 1);
+          itemsArr.push(`${name} x${qty}`);
+        }
+      } else if (order?.items && typeof order.items === "object") {
+        for (const [name, qty] of Object.entries(order.items)) {
+          itemsArr.push(`${String(name)} x${Number(qty ?? 1)}`);
+        }
+      }
+      itemsArr = itemsArr.slice(0, 8);
+      const productosLine = itemsArr.length > 0 ? `\nProductos: ${itemsArr.join(", ")}` : "";
+      const direccionLine = !isRetiro && direccion ? `\nDirección: ${direccion}` : "";
+      return `\nModo: ${mode}${direccionLine}${productosLine}\nTotal: ${msgTotal}`;
+    }
+    function renderOrdersList(orders = []) {
+      ordersListContainer.innerHTML = "";
+      if (!orders || orders.length === 0) {
+        ordersListContainer.innerHTML =
+          '<span class="subtitle">No hay pedidos para este día.</span>';
+        return;
+      }
+      lastOrdersDetail = orders;
+      for (let i = 0; i < orders.length; i++) {
+        const order = orders[i];
+        const orderEl = document.createElement("div");
+        orderEl.className = "order-item";
+        orderEl.dataset.idx = String(i);
+
+        const time = new Date(order.created).toLocaleTimeString("es-AR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
+        const direccion = order.address || order.direccion || "No especificado";
+        const modeLower = (
+          order.mode ||
+          order.modo ||
+          order.orderMode ||
+          ""
+        ).toString().toLowerCase();
+
+        let locationHtml = "";
+        if (modeLower.includes("retiro")) {
+          locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
+        } else {
+          locationHtml = `<span class="order-address is-delivery">${escapeHtml(
+            direccion
+          )}</span>`;
+        }
+
+        const paymentHtml = getPaymentBadgeHtml(order);
+        const copiedHtml = getCopiedBadgeHtml(order);
         const total = getOrderTotal(order);
-        const msgTotal = Number.isFinite(total) ? `$${total.toLocaleString("es-AR")}` : "N/A";
-        let itemsArr = [];
-        if (Array.isArray(order?.items)) {
-          for (const it of order.items) {
-            const name = String(it?.name ?? "N/A");
-            const qty = Number(it?.quantity ?? 1);
-            itemsArr.push(`${name} x${qty}`);
-          }
-        } else if (order?.items && typeof order.items === "object") {
-          for (const [name, qty] of Object.entries(order.items)) {
-            itemsArr.push(`${String(name)} x${Number(qty ?? 1)}`);
-          }
-        }
-        itemsArr = itemsArr.slice(0, 8);
-        const productosLine = itemsArr.length > 0 ? `\nProductos: ${itemsArr.join(", ")}` : "";
-        const direccionLine = !isRetiro && direccion ? `\nDirección: ${direccion}` : "";
-        return `\nModo: ${mode}${direccionLine}${productosLine}\nTotal: ${msgTotal}`;
-      }
-      function renderOrdersList(orders = []) {
-        ordersListContainer.innerHTML = "";
-        if (!orders || orders.length === 0) {
-          ordersListContainer.innerHTML =
-            '<span class="subtitle">No hay pedidos para este día.</span>';
-          return;
-        }
-        lastOrdersDetail = orders;
-        for (let i = 0; i < orders.length; i++) {
-          const order = orders[i];
-          const orderEl = document.createElement("div");
-          orderEl.className = "order-item";
-          orderEl.dataset.idx = String(i);
 
-          const time = new Date(order.created).toLocaleTimeString("es-AR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          });
-
-          const direccion = order.address || order.direccion || "No especificado";
-          const modeLower = (
-            order.mode ||
-            order.modo ||
-            order.orderMode ||
-            ""
-          ).toString().toLowerCase();
-
-          let locationHtml = "";
-          if (modeLower.includes("retiro")) {
-            locationHtml = `<span class="order-address is-retiro">Retiro</span>`;
-          } else {
-            locationHtml = `<span class="order-address is-delivery">${escapeHtml(
-              direccion
-            )}</span>`;
-          }
-
-          const paymentHtml = getPaymentBadgeHtml(order);
-          const copiedHtml = getCopiedBadgeHtml(order);
-          const total = getOrderTotal(order);
-
-          let itemsHtml = '<ul class="order-products-list">';
-          if (Array.isArray(order.items)) {
-            for (const item of order.items) {
-              const flavors = collectFlavors(item);
-              const nameHtml = `${escapeHtml(item.name || "N/A")}`;
-              const flavorsHtml = flavors
-                ? `<div class="order-flavors">${escapeHtml(flavors)}</div>`
-                : "";
-              itemsHtml += `<li><div class="item-left"><div class="item-name">${nameHtml}</div>${flavorsHtml}</div><span class="qty">${item.quantity || 1}</span></li>`;
-            }
-          } else if (order.items && typeof order.items === "object") {
-            for (const [name, qty] of Object.entries(order.items)) {
-              itemsHtml += `<li>${escapeHtml(
-                name
-              )} <span class="qty">${qty}</span></li>`;
-            }
-          }
-          itemsHtml += "</ul>";
-
-          const totalHtml =
-            total !== null
-              ? `<div class="order-total-row">
-                  <span class="order-total-pill">$${total.toLocaleString(
-                    "es-AR"
-                  )}</span>
-                </div>`
+        let itemsHtml = '<ul class="order-products-list">';
+        if (Array.isArray(order.items)) {
+          for (const item of order.items) {
+            const flavors = collectFlavors(item);
+            const nameHtml = `${escapeHtml(item.name || "N/A")}`;
+            const flavorsHtml = flavors
+              ? `<div class="order-flavors">${escapeHtml(flavors)}</div>`
               : "";
+            itemsHtml += `<li><div class="item-left"><div class="item-name">${nameHtml}</div>${flavorsHtml}</div><span class="qty">${item.quantity || 1}</span></li>`;
+          }
+        } else if (order.items && typeof order.items === "object") {
+          for (const [name, qty] of Object.entries(order.items)) {
+            itemsHtml += `<li>${escapeHtml(
+              name
+            )} <span class="qty">${qty}</span></li>`;
+          }
+        }
+        itemsHtml += "</ul>";
 
-          const addressRowHtml = `<div class="order-address-row">${locationHtml}</div>`;
-          orderEl.innerHTML = `
+        const totalHtml =
+          total !== null
+            ? `<div class="order-total-row">
+                  <span class="order-total-pill">$${total.toLocaleString(
+              "es-AR"
+            )}</span>
+                </div>`
+            : "";
+
+        const addressRowHtml = `<div class="order-address-row">${locationHtml}</div>`;
+        orderEl.innerHTML = `
             <div class="order-header">
               <div class="order-main-row">
                 <strong class="order-time">${time}hs</strong>
@@ -572,143 +687,201 @@
             ${totalHtml}
           `;
 
-          ordersListContainer.appendChild(orderEl);
-        }
+        ordersListContainer.appendChild(orderEl);
+      }
+    }
+
+    function getMockData() {
+      return {
+        day: new Date().toISOString().slice(0, 10),
+        revenue: 15600,
+        ordersCount: 5,
+        itemsCount: { "Pizza Muzza": 3, "Empanadas Carne": 12, "Fainá": 4 },
+        paidByMethod: { efectivo: 2, mp: 3 },
+        revenueByMethod: {},
+        ordersByMethod: {},
+        ordersByMode: { delivery: 3, retiro: 2 },
+        deliveryByAddress: {},
+        orders_detail: [
+          {
+            created: new Date().toISOString(),
+            mode: "delivery",
+            address: "Av. Corrientes 1234",
+            paymentMethod: "efectivo",
+            items: { "Pizza Muzza": 1, "Fainá": 2 },
+            total: 5200,
+            pagoEfectivo: 5200
+          },
+          {
+            created: new Date(Date.now() - 1800000).toISOString(),
+            mode: "retiro",
+            paymentMethod: "mp",
+            items: { "Empanadas Carne": 6 },
+            total: 4200,
+            pagoMp: 4200
+          },
+          {
+            created: new Date(Date.now() - 3600000).toISOString(),
+            mode: "delivery",
+            address: "Lavalle 456",
+            paymentMethod: "mixto",
+            items: { "Pizza Muzza": 2, "Empanadas Carne": 6 },
+            total: 12000,
+            pagoEfectivo: 2000,
+            pagoMp: 10000
+          }
+        ]
+      };
+    }
+
+    async function loadData() {
+      elErr.textContent = "";
+      dayList.innerHTML = "";
+      ordersListContainer.innerHTML = "";
+
+      const day = document.getElementById("day").value;
+      if (!day) {
+        elErr.textContent = "Por favor, selecciona una fecha.";
+        return;
       }
 
-      async function loadData() {
-        elErr.textContent = "";
-        dayList.innerHTML = "";
-        ordersListContainer.innerHTML = "";
+      const url = "/api/daily?day=" + day;
 
-        const day = document.getElementById("day").value;
-        if (!day) {
-          elErr.textContent = "Por favor, selecciona una fecha.";
-          return;
-        }
-
-        const url = "/api/daily?day=" + day;
-
-        try {
-          const res = await fetch(url);
-          if (!res.ok) {
+      let data = null;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          // Check if local dev
+          if (res.status === 404 && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
+            console.warn("API 404 in local dev, using mock data.");
+            elErr.textContent = "⚠️ Modo local: API no encontrada, usando datos de prueba.";
+            elErr.style.color = "#856404";
+            elErr.style.backgroundColor = "#fff3cd";
+            elErr.style.padding = "0.5rem";
+            elErr.style.borderRadius = "4px";
+            data = getMockData();
+          } else {
             const txt = await res.text().catch(() => "");
             throw new Error(`${res.status} ${txt}`);
           }
-
-          const data = await res.json();
-
-          // ===== TRANSFERENCIA POR MODO =====
-          let transferDelivery = 0;
-          let transferRetiro = 0;
-          let cambioTotal = 0;
-
-          for (const order of data.orders_detail || []) {
-            const mp =
-              Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
-            if (mp <= 0) continue;
-            const modeLower = (
-              order.mode ||
-              order.modo ||
-              order.orderMode ||
-              ""
-            ).toString().toLowerCase();
-            if (modeLower.includes("retiro")) transferRetiro += mp;
-            else if (modeLower.includes("delivery")) transferDelivery += mp;
-          }
-
-          const ordersByMode = data.ordersByMode || {};
-          const deliveryCount = safeMethodValue(ordersByMode, [
-            "delivery",
-            "Delivery",
-          ]);
-          const pickupCount = safeMethodValue(ordersByMode, [
-            "retiro",
-            "Retiro",
-          ]);
-
-          const rows = [
-            ["Pedidos", data.ordersCount || 0],
-            ['<span class="list-indent">Delivery</span>', deliveryCount],
-            ['<span class="list-indent">Retiro</span>', pickupCount]
-          ];
-
-          rows.forEach(([label, val]) => {
-            const div = document.createElement("div");
-            div.className = "list-row";
-            div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
-            dayList.appendChild(div);
-          });
-
-          // ✅ Totales por método (incluye mixtos) calculados desde orders_detail
-          let efectivoLocal = 0,
-            transferenciaLocal = 0,
-            debitoLocal = 0;
-          for (const order of data.orders_detail || []) {
-            const total = getOrderTotal(order);
-            const parsed = parsePagoDetalle(order.pagoDetalle || order.detallePago || "");
-            const mp =
-              Number(order.pagoMp ?? order.transferencia ?? order.mp ?? parsed.mp ?? 0) || 0;
-            const deb =
-              Number(order.pagoDebito ?? order.debito ?? 0) || 0;
-            const ef =
-              Number(order.pagoEfectivo ?? order.efectivo ?? parsed.ef ?? 0) || 0;
-            const restante = Number.isFinite(total) ? Math.max(0, total - mp - deb) : ef;
-            const appliedCash = Math.min(ef, restante);
-            const cambio = Math.max(0, ef - appliedCash);
-            efectivoLocal += appliedCash;
-            transferenciaLocal += mp;
-            debitoLocal += deb;
-            cambioTotal += cambio;
-          }
-
-          wEfectivo.textContent = `$${efectivoLocal.toLocaleString("es-AR")}`;
-          wTransfer.textContent = `$${transferenciaLocal.toLocaleString("es-AR")}`;
-          wDebito.textContent = `$${debitoLocal.toLocaleString("es-AR")}`;
-          if (wTotal) {
-            const totalWidgets = efectivoLocal + transferenciaLocal + debitoLocal;
-            wTotal.textContent = `$${totalWidgets.toLocaleString("es-AR")}`;
-          }
-          if (mTransferDelivery) {
-            mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
-          }
-          if (mTransferRetiro) {
-            mTransferRetiro.textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
-          }
-          
-
-          // otros widgets
-          // const pbm = data.paidByMethod || {};
-          // Caja efectivo/transferencia eliminado
-
-          // Widgets de transferencia por modo eliminados
-
-          lastItemsCount = data.itemsCount || {};
-          renderTopItemsRow(lastItemsCount, 20);
-          renderOrdersList(data.orders_detail);
-          
-          if (typeof data.ordersCount === "number") {
-            if (lastOrdersCount === null) {
-              lastOrdersCount = data.ordersCount;
-            } else if (data.ordersCount > lastOrdersCount) {
-              lastOrdersCount = data.ordersCount;
-              const newest = Array.isArray(data.orders_detail) ? data.orders_detail[0] || null : null;
-              const text = buildOrderNotifyText(newest || {});
-              fetch("/api/notify-telegram", {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ text }),
-              }).catch(() => {});
-            }
-          }
-        } catch (err) {
-          elErr.textContent = "Error: " + (err?.message || err);
-          console.error(err);
+        } else {
+          data = await res.json();
         }
+
+        if (!data) throw new Error("No data received");
+
+        // ===== TRANSFERENCIA POR MODO =====
+        let transferDelivery = 0;
+        let transferRetiro = 0;
+        let cambioTotal = 0;
+
+        for (const order of data.orders_detail || []) {
+          const mp =
+            Number(order.pagoMp ?? order.transferencia ?? order.mp ?? 0) || 0;
+          if (mp <= 0) continue;
+          const modeLower = (
+            order.mode ||
+            order.modo ||
+            order.orderMode ||
+            ""
+          ).toString().toLowerCase();
+          if (modeLower.includes("retiro")) transferRetiro += mp;
+          else if (modeLower.includes("delivery")) transferDelivery += mp;
+        }
+
+        const ordersByMode = data.ordersByMode || {};
+        const deliveryCount = safeMethodValue(ordersByMode, [
+          "delivery",
+          "Delivery",
+        ]);
+        const pickupCount = safeMethodValue(ordersByMode, [
+          "retiro",
+          "Retiro",
+        ]);
+
+        const rows = [
+          ["Pedidos", data.ordersCount || 0],
+          ['<span class="list-indent">Delivery</span>', deliveryCount],
+          ['<span class="list-indent">Retiro</span>', pickupCount]
+        ];
+
+        rows.forEach(([label, val]) => {
+          const div = document.createElement("div");
+          div.className = "list-row";
+          div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
+          dayList.appendChild(div);
+        });
+
+        // ✅ Totales por método (incluye mixtos) calculados desde orders_detail
+        let efectivoLocal = 0,
+          transferenciaLocal = 0,
+          debitoLocal = 0;
+        for (const order of data.orders_detail || []) {
+          const total = getOrderTotal(order);
+          const parsed = parsePagoDetalle(order.pagoDetalle || order.detallePago || "");
+          const mp =
+            Number(order.pagoMp ?? order.transferencia ?? order.mp ?? parsed.mp ?? 0) || 0;
+          const deb =
+            Number(order.pagoDebito ?? order.debito ?? 0) || 0;
+          const ef =
+            Number(order.pagoEfectivo ?? order.efectivo ?? parsed.ef ?? 0) || 0;
+          const restante = Number.isFinite(total) ? Math.max(0, total - mp - deb) : ef;
+          const appliedCash = Math.min(ef, restante);
+          const cambio = Math.max(0, ef - appliedCash);
+          efectivoLocal += appliedCash;
+          transferenciaLocal += mp;
+          debitoLocal += deb;
+          cambioTotal += cambio;
+        }
+
+        wEfectivo.textContent = `$${efectivoLocal.toLocaleString("es-AR")}`;
+        wTransfer.textContent = `$${transferenciaLocal.toLocaleString("es-AR")}`;
+        wDebito.textContent = `$${debitoLocal.toLocaleString("es-AR")}`;
+        if (wTotal) {
+          const totalWidgets = efectivoLocal + transferenciaLocal + debitoLocal;
+          wTotal.textContent = `$${totalWidgets.toLocaleString("es-AR")}`;
+        }
+        if (mTransferDelivery) {
+          mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
+        }
+        if (mTransferRetiro) {
+          mTransferRetiro.textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
+        }
+
+
+        // otros widgets
+        // const pbm = data.paidByMethod || {};
+        // Caja efectivo/transferencia eliminado
+
+        // Widgets de transferencia por modo eliminados
+
+        lastItemsCount = data.itemsCount || {};
+        renderTopItemsRow(lastItemsCount, 20);
+        renderOrdersList(data.orders_detail);
+
+        if (typeof data.ordersCount === "number") {
+          if (lastOrdersCount === null) {
+            lastOrdersCount = data.ordersCount;
+          } else if (data.ordersCount > lastOrdersCount) {
+            lastOrdersCount = data.ordersCount;
+            const newest = Array.isArray(data.orders_detail) ? data.orders_detail[0] || null : null;
+            const text = buildOrderNotifyText(newest || {});
+            fetch("/api/notify-telegram", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ text }),
+            }).catch(() => { });
+          }
+        }
+      } catch (err) {
+        elErr.textContent = "Error: " + (err?.message || err);
+        console.error(err);
       }
+    }
 
-      
 
-    </script>
-  </body>
+
+  </script>
+</body>
+
 </html>
