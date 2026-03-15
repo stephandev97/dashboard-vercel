@@ -94,13 +94,18 @@ export async function onRequestGet({ request, env }) {
     const pctTransfer = totalPayments > 0 ? Math.round((paidByMethod.transferencia / totalPayments) * 100) : 0;
     const pctDebito = totalPayments > 0 ? Math.round((paidByMethod.debito / totalPayments) * 100) : 0;
 
-    // Mes anterior para comparar
+    // Mes anterior para comparar (mismos días del mes)
     let prevMonthRevenue = 0;
     let prevMonthOrders = 0;
     const prevMonthDate = new Date(year, month - 2, 1);
     const prevFirstDay = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}-01`;
-    const prevLastDayObj = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1, 0);
-    const prevLastDay = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}-${String(prevLastDayObj.getDate()).padStart(2, "0")}`;
+    
+    // Si es mes actual, usar el día de hoy; si no, usar el último día del mes
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const compareDay = isCurrentMonth ? Math.min(today.getDate(), lastDayOfMonth) : lastDayOfMonth;
+    const prevLastDay = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}-${String(compareDay).padStart(2, "0")}`;
 
     try {
       const prevFilter = `day >= "${prevFirstDay}" && day <= "${prevLastDay}"`;
