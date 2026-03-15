@@ -18,9 +18,17 @@
 
 
   <div class="container">
-    <div class="controls">
+<div class="controls">
       <span id="dayLabel" class="day-label"></span>
       <div class="nav-arrows">
+        <button id="monthStatsBtn" title="Estadísticas del mes" class="icon-btn" aria-label="Estadísticas del mes">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </button>
         <button id="prevDay" title="Día anterior" class="icon-btn" aria-label="Día anterior">‹</button>
         <button id="nextDay" title="Día siguiente" class="icon-btn" aria-label="Día siguiente">›</button>
         <button id="goToday" title="Ir a hoy" class="icon-btn" aria-label="Ir a hoy">↻</button>
@@ -39,13 +47,90 @@
             <path d="M8 18h.01"></path>
           </svg>
         </button>
+        <button id="cashBtn" title="Efectivo" class="icon-btn" aria-label="Efectivo" style="display: none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="6" width="16" height="12" rx="2"></rect>
+            <line x1="8" y1="10" x2="16" y2="10"></line>
+            <line x1="8" y1="14" x2="16" y2="14"></line>
+          </svg>
+        </button>
+        <a href="ingresos-gastos.html" title="Ingresos y gastos" class="icon-btn" aria-label="Ingresos y gastos" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h18"></path>
+            <path d="M6 11h12"></path>
+            <path d="M7 15h4"></path>
+            <path d="M13 15h4"></path>
+            <path d="M9 19h6"></path>
+          </svg>
+        </a>
       </div>
       <input type="date" id="day" style="display:none" />
     </div>
 
     <div id="error"></div>
 
-    <div class="grid">
+    <div id="monthModalOverlay" class="modal-overlay" aria-hidden="true">
+      <div class="modal month-modal">
+        <div class="modal-header">
+          <h4 class="modal-title">Estadísticas del Mes</h4>
+          <button id="monthModalClose" title="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="card" id="cardMonth">
+        <h3 style="margin: 0.2rem 0">Resumen del mes</h3>
+        <div class="month-header">
+          <button id="prevMonth" class="icon-btn" aria-label="Mes anterior">‹</button>
+          <span id="monthLabel" class="month-name"></span>
+          <button id="nextMonth" class="icon-btn" aria-label="Mes siguiente">›</button>
+        </div>
+        <div id="monthList" class="month-stats"></div>
+        <div class="month-grid">
+          <div class="month-stat-card">
+            <div class="month-stat-label">Ventas total</div>
+            <div id="mTotalRevenue" class="month-stat-value">$0</div>
+            <div id="mRevGrowth" class="month-stat-growth"></div>
+          </div>
+          <div class="month-stat-card">
+            <div class="month-stat-label">Pedidos total</div>
+            <div id="mTotalOrders" class="month-stat-value">0</div>
+            <div id="mOrdersGrowth" class="month-stat-growth"></div>
+          </div>
+          <div class="month-stat-card">
+            <div class="month-stat-label">Ticket promedio</div>
+            <div id="mTicketAvg" class="month-stat-value">$0</div>
+          </div>
+          <div class="month-stat-card highlight">
+            <div class="month-stat-label">Día más pedidos</div>
+            <div id="mBestDayOrders" class="month-stat-value">-</div>
+          </div>
+          <div class="month-stat-card highlight">
+            <div class="month-stat-label">Día más ventas</div>
+            <div id="mBestDayRevenue" class="month-stat-value">-</div>
+          </div>
+        </div>
+        <details class="month-details">
+          <summary class="accordion-summary"><span>Top productos</span><span class="chev">▾</span></summary>
+          <div id="topProductsList" class="top-products-list"></div>
+        </details>
+        <div class="month-payments">
+          <div class="payment-bar">
+            <div id="barEfectivo" class="payment-segment efectivo" style="width: 0%"></div>
+            <div id="barTransfer" class="payment-segment transfer" style="width: 0%"></div>
+            <div id="barDebito" class="payment-segment debito" style="width: 0%"></div>
+          </div>
+          <div class="payment-labels">
+            <span>EF <span id="pctEfectivo">0%</span></span>
+            <span>TRANS <span id="pctTransfer">0%</span></span>
+            <span>DEB <span id="pctDebito">0%</span></span>
+          </div>
+        </div>
+      </div>
+      </div>
+      </div>
+    </div>
+
       <div class="card" id="cardDay">
         <h3 style="margin: 0.2rem 0">Resumen del día</h3>
         <div id="dayList"></div>
@@ -147,6 +232,64 @@
             </div>
 
             <button id="calcActionBtn" class="action-btn">Calcular</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Arqueo Billetes -->
+      <div id="cashModalOverlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal">
+          <div class="modal-header">
+            <h4 class="modal-title">Arqueo de Billetes</h4>
+            <button id="cashModalClose" title="Cerrar">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="calc-row">
+              <div class="input-group">
+                <label>$ 20.000</label>
+                <input type="number" id="bill20000" placeholder="0" class="bill-input" data-value="20000" />
+              </div>
+              <div class="input-group">
+                <label>$ 10.000</label>
+                <input type="number" id="bill10000" placeholder="0" class="bill-input" data-value="10000" />
+              </div>
+            </div>
+
+            <div class="calc-row">
+              <div class="input-group">
+                <label>$ 2.000</label>
+                <input type="number" id="bill2000" placeholder="0" class="bill-input" data-value="2000" />
+              </div>
+              <div class="input-group">
+                <label>$ 1.000</label>
+                <input type="number" id="bill1000" placeholder="0" class="bill-input" data-value="1000" />
+              </div>
+            </div>
+
+            <div class="calc-row">
+              <div class="input-group">
+                <label>$ 500</label>
+                <input type="number" id="bill500" placeholder="0" class="bill-input" data-value="500" />
+              </div>
+              <div class="input-group">
+                <label>Otros ($)</label>
+                <div class="input-wrapper">
+                  <span class="prefix">$</span>
+                  <input type="number" id="billOther" placeholder="0" class="bill-input" data-value="1" />
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-divider"></div>
+
+            <div class="calc-result">
+              <span>Total Efectivo</span>
+              <strong id="cashTotal">$0</strong>
+            </div>
+
+            <div id="cashBundles" class="bundles-container" style="margin-top: 15px;"></div>
+
+            <button id="cashClearBtn" class="action-btn" style="background-color: #64748b; margin-top: 10px;">Limpiar</button>
           </div>
         </div>
       </div>
@@ -278,6 +421,214 @@
     });
 
 
+
+    /* ======= CASH COUNT LOGIC ======= */
+    const cashBtn = document.getElementById("cashBtn");
+    const cashModalOverlay = document.getElementById("cashModalOverlay");
+    const cashModalClose = document.getElementById("cashModalClose");
+    const cashClearBtn = document.getElementById("cashClearBtn");
+    const elCashTotal = document.getElementById("cashTotal");
+    const elCashBundles = document.getElementById("cashBundles");
+    const billInputs = document.querySelectorAll(".bill-input");
+
+    function openCash() {
+      if (cashModalOverlay) cashModalOverlay.setAttribute("aria-hidden", "false");
+    }
+    function closeCash() {
+      if (cashModalOverlay) cashModalOverlay.setAttribute("aria-hidden", "true");
+    }
+    function calculateCash() {
+      let total = 0;
+      let billCounts = {};
+      
+      billInputs.forEach(input => {
+        const val = parseFloat(input.value) || 0;
+        const multiplier = parseFloat(input.dataset.value) || 1;
+        total += val * multiplier;
+        if (multiplier > 1) { // Only standard bills for bundling
+          billCounts[multiplier] = val;
+        }
+      });
+      elCashTotal.textContent = `$${total.toLocaleString("es-AR")}`;
+      
+      // Calculate Bundles
+      calculateBundles(billCounts);
+
+      const state = {};
+      billInputs.forEach(input => {
+        if (input.id) state[input.id] = input.value;
+      });
+      localStorage.setItem("cash_count_state", JSON.stringify(state));
+    }
+    
+    function calculateBundles(availableCounts) {
+      // Clone available counts
+      let currentCounts = { ...availableCounts };
+      const targets = [1000000, 100000, 10000];
+      const denoms = [20000, 10000, 2000, 1000, 500]; // Descending
+      const results = [];
+
+      targets.forEach(target => {
+        while (true) {
+          let needed = target;
+          let tempCounts = { ...currentCounts };
+          let composition = {};
+          let possible = true;
+
+          // Try to fill this target
+          for (let d of denoms) {
+            if (needed <= 0) break;
+            const count = tempCounts[d] || 0;
+            if (count > 0) {
+              const take = Math.min(Math.floor(needed / d), count);
+              if (take > 0) {
+                composition[d] = take;
+                needed -= take * d;
+                tempCounts[d] -= take;
+              }
+            }
+          }
+
+          if (needed === 0) {
+            // Bundle formed successfully
+            results.push({ target, composition });
+            currentCounts = tempCounts; // Commit changes
+          } else {
+            // Could not form another bundle of this target size
+            break; 
+          }
+        }
+      });
+
+      // Calculate remainder
+      let remainderTotal = 0;
+      let remainderComposition = {};
+      denoms.forEach(d => {
+        if (currentCounts[d] > 0) {
+          remainderComposition[d] = currentCounts[d];
+          remainderTotal += currentCounts[d] * d;
+        }
+      });
+
+      // Render Results
+      if (results.length === 0 && remainderTotal === 0) {
+        elCashBundles.innerHTML = "";
+        return;
+      }
+
+      let html = "";
+      
+      // Render Bundles
+      results.forEach((r, idx) => {
+        // Build iOS list rows
+        const rowsHtml = Object.entries(r.composition)
+          .sort((a, b) => b[0] - a[0])
+          .map(([d, c]) => `
+            <div class="ios-row">
+              <div class="ios-row-left">
+                <span class="ios-qty">${c}</span>
+                <span class="ios-label-billetes">billetes</span>
+              </div>
+              <div class="ios-row-right">
+                <span class="ios-denom">$${parseInt(d).toLocaleString("es-AR")}</span>
+              </div>
+            </div>
+          `)
+          .join("");
+        
+        html += `
+          <div class="ios-card">
+            <div class="ios-card-header">
+              <span class="ios-card-subtitle">FAJO</span>
+              <span class="ios-card-title">$${r.target.toLocaleString("es-AR")}</span>
+            </div>
+            <div class="ios-card-body">
+              ${rowsHtml}
+            </div>
+          </div>
+        `;
+      });
+
+      // Render Remainder
+      if (remainderTotal > 0) {
+        const rowsHtml = Object.entries(remainderComposition)
+          .sort((a, b) => b[0] - a[0])
+          .map(([d, c]) => `
+            <div class="ios-row">
+              <div class="ios-row-left">
+                <span class="ios-qty warning">${c}</span>
+                <span class="ios-label-billetes">billetes</span>
+              </div>
+              <div class="ios-row-right">
+                <span class="ios-denom">$${parseInt(d).toLocaleString("es-AR")}</span>
+              </div>
+            </div>
+          `)
+          .join("");
+          
+        html += `
+          <div class="ios-card remainder">
+            <div class="ios-card-header">
+              <span class="ios-card-subtitle warning">RESTO</span>
+              <span class="ios-card-title warning">$${remainderTotal.toLocaleString("es-AR")}</span>
+            </div>
+            <div class="ios-card-body">
+              ${rowsHtml}
+            </div>
+          </div>
+        `;
+      }
+      
+      elCashBundles.innerHTML = html;
+    }
+
+    function clearCash() {
+      billInputs.forEach(input => input.value = "");
+      calculateCash();
+    }
+    function loadCashState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("cash_count_state") || "{}");
+        billInputs.forEach(input => {
+          if (input.id && saved[input.id]) input.value = saved[input.id];
+        });
+        calculateCash();
+      } catch (e) {}
+    }
+
+if (cashBtn) cashBtn.addEventListener("click", openCash);
+    if (cashModalClose) cashModalClose.addEventListener("click", closeCash);
+
+    /* ======= MONTHLY MODAL ======= */
+    const monthStatsBtn = document.getElementById("monthStatsBtn");
+    const monthModalOverlay = document.getElementById("monthModalOverlay");
+    const monthModalClose = document.getElementById("monthModalClose");
+
+    function openMonthModal() {
+      if (monthModalOverlay) monthModalOverlay.setAttribute("aria-hidden", "false");
+      loadMonthlyData();
+    }
+    function closeMonthModal() {
+      if (monthModalOverlay) monthModalOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    if (monthStatsBtn) monthStatsBtn.addEventListener("click", openMonthModal);
+    if (monthModalClose) monthModalClose.addEventListener("click", closeMonthModal);
+    if (monthModalOverlay) {
+      monthModalOverlay.addEventListener("click", (e) => {
+        if (e.target === monthModalOverlay) closeMonthModal();
+      });
+    }
+    if (cashClearBtn) cashClearBtn.addEventListener("click", clearCash);
+    if (cashModalOverlay) {
+      cashModalOverlay.addEventListener("click", (e) => {
+        if (e.target === cashModalOverlay) closeCash();
+      });
+    }
+    billInputs.forEach(el => el.addEventListener("input", calculateCash));
+
+    // Load initial state
+    loadCashState();
 
     function getLocalDateString(date = new Date()) {
       const year = date.getFullYear();
@@ -879,7 +1230,112 @@
       }
     }
 
+    /* ======= MONTHLY STATS ======= */
+    const monthLabel = document.getElementById("monthLabel");
+    const prevMonthBtn = document.getElementById("prevMonth");
+    const nextMonthBtn = document.getElementById("nextMonth");
+    let currentMonth = null;
 
+    function getMonthString(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      return `${y}-${m}`;
+    }
+
+    function parseMonthString(str) {
+      const [y, m] = str.split("-").map(Number);
+      return new Date(y, m - 1, 1);
+    }
+
+    function formatMonthLabel(date) {
+      const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      return `${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    function changeMonth(delta) {
+      const dt = parseMonthString(currentMonth);
+      dt.setMonth(dt.getMonth() + delta);
+      currentMonth = getMonthString(dt);
+      loadMonthlyData();
+    }
+
+    async function loadMonthlyData() {
+      const monthList = document.getElementById("monthList");
+      if (!monthList) return;
+      monthList.innerHTML = '<span class="subtitle">Cargando...</span>';
+
+      try {
+        const url = "/api/monthly?month=" + currentMonth;
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          if (res.status === 404 && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
+            monthList.innerHTML = '<span class="subtitle">API no encontrada. Ejecutá el dev server de Vercel/Cloudflare.</span>';
+            return;
+          }
+          throw new Error(`${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.details);
+
+        monthLabel.textContent = data.monthName;
+
+        document.getElementById("mTotalRevenue").textContent = "$" + data.totalRevenue.toLocaleString("es-AR");
+        document.getElementById("mTotalOrders").textContent = data.totalOrders.toLocaleString("es-AR");
+        document.getElementById("mTicketAvg").textContent = "$" + data.ticketPromedio.toLocaleString("es-AR");
+        document.getElementById("mBestDayOrders").textContent = data.bestDayOrders.day ? `${data.bestDayOrders.count} ped` : "-";
+        document.getElementById("mBestDayRevenue").textContent = data.bestDayRevenue.day ? `$${data.bestDayRevenue.revenue.toLocaleString("es-AR")}` : "-";
+
+        const revGrowth = data.revGrowth || 0;
+        const ordersGrowth = data.ordersGrowth || 0;
+        document.getElementById("mRevGrowth").textContent = revGrowth > 0 ? `↑${revGrowth}%` : revGrowth < 0 ? `↓${Math.abs(revGrowth)}%` : "";
+        document.getElementById("mRevGrowth").className = "month-stat-growth " + (revGrowth >= 0 ? "positive" : "negative");
+        document.getElementById("mOrdersGrowth").textContent = ordersGrowth > 0 ? `↑${ordersGrowth}%` : ordersGrowth < 0 ? `↓${Math.abs(ordersGrowth)}%` : "";
+        document.getElementById("mOrdersGrowth").className = "month-stat-growth " + (ordersGrowth >= 0 ? "positive" : "negative");
+
+        const topProductsList = document.getElementById("topProductsList");
+        if (data.topProducts && data.topProducts.length > 0) {
+          topProductsList.innerHTML = data.topProducts.map(p => 
+            `<div class="top-product-item"><span>${escapeHtml(p.name)}</span><span class="qty">${p.qty}</span></div>`
+          ).join("");
+        } else {
+          topProductsList.innerHTML = '<span class="subtitle">Sin datos</span>';
+        }
+
+        const pctEF = data.paymentPct?.efectivo || 0;
+        const pctTR = data.paymentPct?.transferencia || 0;
+        const pctDB = data.paymentPct?.debito || 0;
+        document.getElementById("barEfectivo").style.width = pctEF + "%";
+        document.getElementById("barTransfer").style.width = pctTR + "%";
+        document.getElementById("barDebito").style.width = pctDB + "%";
+        document.getElementById("pctEfectivo").textContent = pctEF + "%";
+        document.getElementById("pctTransfer").textContent = pctTR + "%";
+        document.getElementById("pctDebito").textContent = pctDB + "%";
+
+        monthList.innerHTML = "";
+      } catch (err) {
+        monthList.textContent = "Error: " + (err?.message || err);
+      }
+    }
+
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener("click", () => changeMonth(-1));
+    }
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener("click", () => changeMonth(1));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const now = new Date();
+      if (now.getDate() < 3) {
+        now.setMonth(now.getMonth() - 1);
+      }
+      now.setDate(1);
+      currentMonth = getMonthString(now);
+      loadMonthlyData();
+    });
 
   </script>
 </body>

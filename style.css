@@ -589,6 +589,120 @@ details[open] summary .chev {
   box-shadow: 0 2px 10px rgba(74, 222, 128, 0.25);
 }
 
+/* =================== CASH BUNDLES (iOS Style) =================== */
+.bundles-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Wider cards for iOS look */
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.ios-card {
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.ios-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.12);
+}
+
+.ios-card.remainder {
+  background: #fff; /* Keep white for consistency, maybe border highlight */
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.ios-card-header {
+  padding: 1.2rem 1.5rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  background: rgba(249, 249, 249, 0.5); /* Subtle contrast */
+}
+
+.ios-card-subtitle {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8e8e93;
+  font-weight: 600;
+}
+
+.ios-card-subtitle.warning {
+  color: #ff9500;
+}
+
+.ios-card-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #1c1c1e;
+  letter-spacing: -0.02em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.ios-card-title.warning {
+  color: #ff9500;
+}
+
+.ios-card-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ios-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.ios-row:last-child {
+  border-bottom: none;
+}
+
+.ios-row-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.ios-qty {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #007aff; /* iOS Blue */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.ios-qty.warning {
+  color: #ff9500; /* iOS Orange */
+}
+
+.ios-label-billetes {
+  font-size: 0.85rem;
+  color: #8e8e93;
+  font-weight: 400;
+}
+
+.ios-row-right {
+  display: flex;
+  align-items: center;
+}
+
+.ios-denom {
+  font-size: 1.1rem;
+  color: #1c1c1e;
+  font-weight: 500;
+}
+
 .order-header {
   display: flex;
   flex-direction: column;
@@ -906,4 +1020,278 @@ details[open] summary .chev {
     max-width: 100%;
     width: 100%;
   }
+}
+
+a.icon-btn {
+  text-decoration: none;
+}
+
+.tx-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .4rem;
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+
+.tx-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .75rem;
+  border-radius: 12px;
+  border: 1px solid var(--pixel-border-soft);
+  background: rgba(var(--pixel-bg-rgb), 0.35);
+}
+
+.tx-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-title {
+  font-weight: 600;
+  color: var(--pixel-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tx-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .35rem;
+  flex-shrink: 0;
+}
+
+.tx-amount {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.2px;
+}
+
+.tx-amount.is-income {
+  color: var(--pixel-accent);
+}
+
+.tx-amount.is-expense {
+  color: #fb7185;
+}
+
+.tx-actions {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.tabs {
+  margin-top: 12px;
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.tab-btn {
+  padding: .45rem .85rem;
+  border-radius: 999px;
+  border: 1px solid var(--pixel-border);
+  background: rgba(var(--pixel-bg-rgb), 0.4);
+  color: var(--pixel-text-soft);
+  font-weight: 700;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tab-btn.is-active,
+.tab-btn[aria-selected="true"] {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: var(--pixel-accent);
+  color: var(--pixel-text);
+}
+
+.income-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tab-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .75rem;
+}
+
+@media (max-width: 900px) {
+  .income-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =================== MONTHLY STATS =================== */
+.month-modal {
+  max-width: 560px;
+}
+
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.month-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  min-width: 160px;
+  text-align: center;
+}
+
+.month-stats {
+  margin-bottom: 0.5rem;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.month-stat-card {
+  background: rgba(var(--pixel-bg-rgb), 0.5);
+  border: 1px solid var(--pixel-border);
+  border-radius: 10px;
+  padding: 0.65rem;
+  text-align: center;
+}
+
+.month-stat-card.highlight {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.month-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pixel-text-soft);
+  margin-bottom: 0.25rem;
+}
+
+.month-stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--pixel-text);
+}
+
+.month-stat-growth {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
+.month-stat-growth.positive {
+  color: var(--pixel-accent);
+}
+
+.month-stat-growth.negative {
+  color: #fb7185;
+}
+
+.month-details {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--pixel-border-soft);
+  padding-top: 0.5rem;
+}
+
+.month-details .accordion-summary {
+  font-size: 0.85rem;
+  color: var(--pixel-text-soft);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+}
+
+.top-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.top-product-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+  background: rgba(var(--pixel-bg-rgb), 0.3);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.top-product-item .qty {
+  font-weight: 600;
+  color: var(--pixel-accent);
+}
+
+.month-payments {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--pixel-border-soft);
+}
+
+.payment-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--pixel-border);
+}
+
+.payment-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.payment-segment.efectivo {
+  background: var(--pixel-efectivo);
+}
+
+.payment-segment.transfer {
+  background: var(--pixel-transfer);
+}
+
+.payment-segment.debito {
+  background: #f472b6;
+}
+
+.payment-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--pixel-text-soft);
+}
+
+.accordion-summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordion-summary .chev {
+  transition: transform 0.2s ease;
+}
+
+details[open] .accordion-summary .chev {
+  transform: rotate(180deg);
 }

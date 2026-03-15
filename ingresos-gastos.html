@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ingresos y Gastos</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="controls">
+        <span class="day-label">Ingresos y gastos</span>
+        <div class="nav-arrows">
+          <a
+            href="index.html"
+            title="Volver al dashboard"
+            class="icon-btn"
+            aria-label="Volver al dashboard"
+            >‹</a
+          >
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 12px">
+        <h3 style="margin: 0.2rem 0">Resumen</h3>
+        <div class="small-widgets">
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">ingresos</div>
+            <div id="wIncome" class="widget-value">$0</div>
+          </div>
+          <div class="widget">
+            <div style="font-size: 0.8rem; color: #666">gastos</div>
+            <div id="wExpense" class="widget-value">$0</div>
+          </div>
+          <div class="widget w-total">
+            <div style="font-size: 0.8rem; color: #666">balance</div>
+            <div id="wBalance" class="widget-value">$0</div>
+          </div>
+        </div>
+        <div class="subtitle" id="summaryLabel" style="margin-top: 10px"></div>
+        <div class="list-row" style="margin-top: 8px; border-bottom: none">
+          <strong>Dólar MEP venta</strong>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem">
+            <span id="mepRate">—</span>
+            <button
+              id="refreshMepBtn"
+              class="icon-btn"
+              type="button"
+              title="Actualizar cotización"
+              aria-label="Actualizar cotización"
+            >
+              ↻
+            </button>
+          </span>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Ingresos y Gastos">
+        <button id="tabIncomeBtn" class="tab-btn" type="button" role="tab" aria-selected="true">
+          Ingresos
+        </button>
+        <button id="tabExpenseBtn" class="tab-btn" type="button" role="tab" aria-selected="false">
+          Gastos
+        </button>
+      </div>
+
+      <div id="tabIncomePanel" class="tab-panel" role="tabpanel">
+        <div class="income-grid">
+          <div class="card">
+            <div class="tab-panel-header">
+              <h3 style="margin: 0.2rem 0">Agos</h3>
+              <span id="agosTotal" class="subtitle">$0</span>
+            </div>
+
+            <div class="input-group" style="margin-top: 10px">
+              <label for="agosMercadoPago">MercadoPago</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="agosMercadoPago"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="agosNaranja">Naranja</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="agosNaranja"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="agosPersonal">Personal</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="agosPersonal"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="agosDolares">Dolares</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="agosDolares"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="tab-panel-header">
+              <h3 style="margin: 0.2rem 0">Emi</h3>
+              <span id="emiTotal" class="subtitle">$0</span>
+            </div>
+
+            <div class="input-group" style="margin-top: 10px">
+              <label for="emiMercadoPago">MercadoPago</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="emiMercadoPago"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="emiNaranja">Naranja</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="emiNaranja"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="emiPersonal">Personal</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="emiPersonal"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="emiSantander">Santander</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="emiSantander"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="emiDolares">Dolares</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="emiDolares"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="tab-panel-header">
+              <h3 style="margin: 0.2rem 0">Efectivo</h3>
+              <span id="efectivoTotal" class="subtitle">$0</span>
+            </div>
+
+            <div class="input-group" style="margin-top: 10px">
+              <label for="efectivoPesos">Pesos</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="efectivoPesos"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="efectivoDolares">Dolares</label>
+              <div class="input-wrapper">
+                <span class="prefix">$</span>
+                <input
+                  id="efectivoDolares"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  data-money="true"
+                  data-money-scope="income"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tabExpensePanel" class="tab-panel" role="tabpanel" hidden>
+        <div class="grid">
+          <div class="card">
+            <h3 style="margin: 0.2rem 0">Nuevo gasto</h3>
+            <form id="txForm">
+              <div class="calc-row">
+                <div class="input-group">
+                  <label for="txType">Tipo</label>
+                  <select id="txType" required>
+                    <option value="expense">Gasto</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label for="txDate">Fecha</label>
+                  <input type="date" id="txDate" required />
+                </div>
+              </div>
+
+              <div class="calc-row">
+                <div class="input-group">
+                  <label for="txAmount">Monto</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input
+                      type="text"
+                      id="txAmount"
+                      inputmode="decimal"
+                      placeholder="0"
+                      required
+                      data-money="true"
+                      data-money-scope="tx"
+                    />
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="txCategory">Categoría</label>
+                  <input
+                    type="text"
+                    id="txCategory"
+                    placeholder="Ej: Comida"
+                    list="categoryOptions"
+                  />
+                  <datalist id="categoryOptions">
+                    <option value="Comida"></option>
+                    <option value="Delivery"></option>
+                    <option value="Servicios"></option>
+                    <option value="Alquiler"></option>
+                    <option value="Sueldos"></option>
+                    <option value="Compras"></option>
+                    <option value="Impuestos"></option>
+                    <option value="Otros"></option>
+                  </datalist>
+                </div>
+              </div>
+
+              <div class="input-group" style="margin-top: 10px">
+                <label for="txNote">Detalle</label>
+                <input type="text" id="txNote" placeholder="Ej: Proveedor, boleta, etc." />
+              </div>
+
+              <div class="calc-divider"></div>
+
+              <button id="saveBtn" class="action-btn" type="submit">Guardar</button>
+              <button
+                id="cancelEditBtn"
+                class="action-btn"
+                type="button"
+                style="background-color: #64748b; margin-top: 10px; display: none"
+              >
+                Cancelar edición
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3 style="margin: 0.2rem 0">Gastos</h3>
+
+            <div class="calc-row">
+              <div class="input-group">
+                <label for="filterMonth">Mes</label>
+                <input type="month" id="filterMonth" />
+              </div>
+              <div class="input-group">
+                <label for="filterType">Tipo</label>
+                <select id="filterType">
+                  <option value="expense">Gastos</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="calc-row" style="margin-top: 8px">
+              <div class="input-group" style="flex: 1">
+                <label for="filterText">Buscar</label>
+                <input type="text" id="filterText" placeholder="Detalle o categoría" />
+              </div>
+            </div>
+
+            <div class="calc-divider"></div>
+
+            <div class="tx-actions-bar">
+              <button id="exportJsonBtn" class="icon-btn" type="button" title="Exportar JSON" aria-label="Exportar JSON">
+                ⬇
+              </button>
+              <label class="icon-btn" title="Importar JSON" aria-label="Importar JSON" style="cursor: pointer">
+                ⬆
+                <input id="importJsonInput" type="file" accept="application/json" style="display: none" />
+              </label>
+              <button id="exportCsvBtn" class="icon-btn" type="button" title="Exportar CSV" aria-label="Exportar CSV">
+                ⇩
+              </button>
+              <button
+                id="clearAllBtn"
+                class="icon-btn"
+                type="button"
+                title="Borrar todo"
+                aria-label="Borrar todo"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div id="txList" class="tx-list" style="margin-top: 10px"></div>
+            <div id="emptyState" class="subtitle" style="margin-top: 10px; display: none">
+              No hay gastos para mostrar.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "ig_transactions_v1";
+      const INCOME_SPLIT_KEY = "ig_income_split_v1";
+      const ACTIVE_TAB_KEY = "ig_active_tab_v1";
+      const MEP_CACHE_KEY = "ig_mep_mep_venta_v1";
+
+      const elForm = document.getElementById("txForm");
+      const elType = document.getElementById("txType");
+      const elDate = document.getElementById("txDate");
+      const elAmount = document.getElementById("txAmount");
+      const elCategory = document.getElementById("txCategory");
+      const elNote = document.getElementById("txNote");
+      const elSaveBtn = document.getElementById("saveBtn");
+      const elCancelEditBtn = document.getElementById("cancelEditBtn");
+
+      const elFilterMonth = document.getElementById("filterMonth");
+      const elFilterType = document.getElementById("filterType");
+      const elFilterText = document.getElementById("filterText");
+
+      const elTxList = document.getElementById("txList");
+      const elEmptyState = document.getElementById("emptyState");
+
+      const elWIncome = document.getElementById("wIncome");
+      const elWExpense = document.getElementById("wExpense");
+      const elWBalance = document.getElementById("wBalance");
+      const elSummaryLabel = document.getElementById("summaryLabel");
+      const elMepRate = document.getElementById("mepRate");
+      const elRefreshMepBtn = document.getElementById("refreshMepBtn");
+
+      const elTabIncomeBtn = document.getElementById("tabIncomeBtn");
+      const elTabExpenseBtn = document.getElementById("tabExpenseBtn");
+      const elTabIncomePanel = document.getElementById("tabIncomePanel");
+      const elTabExpensePanel = document.getElementById("tabExpensePanel");
+
+      const elAgosTotal = document.getElementById("agosTotal");
+      const elEmiTotal = document.getElementById("emiTotal");
+      const elEfectivoTotal = document.getElementById("efectivoTotal");
+      const incomeInputs = {
+        agos: {
+          mercadopago: document.getElementById("agosMercadoPago"),
+          naranja: document.getElementById("agosNaranja"),
+          personal: document.getElementById("agosPersonal"),
+          dolares: document.getElementById("agosDolares"),
+        },
+        emi: {
+          mercadopago: document.getElementById("emiMercadoPago"),
+          naranja: document.getElementById("emiNaranja"),
+          personal: document.getElementById("emiPersonal"),
+          santander: document.getElementById("emiSantander"),
+          dolares: document.getElementById("emiDolares"),
+        },
+        efectivo: {
+          pesos: document.getElementById("efectivoPesos"),
+          dolares: document.getElementById("efectivoDolares"),
+        },
+      };
+
+      const elExportJsonBtn = document.getElementById("exportJsonBtn");
+      const elImportJsonInput = document.getElementById("importJsonInput");
+      const elExportCsvBtn = document.getElementById("exportCsvBtn");
+      const elClearAllBtn = document.getElementById("clearAllBtn");
+
+      let editingId = null;
+      let activeTab = "income";
+      let mepSell = 0;
+
+      function toLocalDateString(date = new Date()) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+
+      function toMonthString(date = new Date()) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        return `${y}-${m}`;
+      }
+
+      function formatMoney(value) {
+        const n = Number(value || 0) || 0;
+        return `$${n.toLocaleString("es-AR")}`;
+      }
+
+      function formatRate(value) {
+        const n = Number(value || 0) || 0;
+        return `$${n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+
+      const inputNumberFormatter = new Intl.NumberFormat("es-AR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+
+      function countDigits(s) {
+        let c = 0;
+        for (let i = 0; i < s.length; i++) {
+          const code = s.charCodeAt(i);
+          if (code >= 48 && code <= 57) c++;
+        }
+        return c;
+      }
+
+      function sanitizeMoneyRaw(raw) {
+        return String(raw ?? "")
+          .replace(/\s/g, "")
+          .replace(/[^\d.,]/g, "");
+      }
+
+      function getDecimalInfo(cleaned) {
+        const lastComma = cleaned.lastIndexOf(",");
+        if (lastComma !== -1) return { index: lastComma, char: "," };
+
+        const dotIndex = cleaned.lastIndexOf(".");
+        if (dotIndex === -1) return { index: -1, char: "" };
+
+        const after = cleaned.slice(dotIndex + 1);
+        const digitsAfter = countDigits(after);
+        if (digitsAfter > 0 && digitsAfter <= 2) return { index: dotIndex, char: "." };
+
+        return { index: -1, char: "" };
+      }
+
+      function groupThousandsEsAr(intDigits) {
+        if (!intDigits) return "";
+        return String(intDigits).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      }
+
+      function formatMoneyTyping(raw) {
+        const s = sanitizeMoneyRaw(raw);
+        if (!s) return { value: "", hasDecimal: false, hasTrailingDecimal: false };
+
+        const { index: sepIndex } = getDecimalInfo(s);
+
+        const hasDecimal = sepIndex !== -1;
+        const hasTrailingDecimal = hasDecimal && sepIndex === s.length - 1;
+
+        let intPart = hasDecimal ? s.slice(0, sepIndex) : s;
+        let decPart = hasDecimal ? s.slice(sepIndex + 1) : "";
+
+        intPart = intPart.replace(/[.,]/g, "");
+        decPart = decPart.replace(/[.,]/g, "").slice(0, 2);
+
+        intPart = intPart.replace(/^0+(?=\d)/, "");
+
+        const grouped = groupThousandsEsAr(intPart);
+        if (!hasDecimal) return { value: grouped, hasDecimal: false, hasTrailingDecimal: false };
+
+        if (hasTrailingDecimal && !decPart) return { value: `${grouped},`, hasDecimal: true, hasTrailingDecimal: true };
+        return { value: `${grouped},${decPart}`, hasDecimal: true, hasTrailingDecimal: false };
+      }
+
+      function setCaretByIntDigits(el, intDigitsBeforeCaret) {
+        const v = String(el.value || "");
+        if (!(intDigitsBeforeCaret > 0)) {
+          el.setSelectionRange(0, 0);
+          return;
+        }
+        let digits = 0;
+        for (let i = 0; i < v.length; i++) {
+          const code = v.charCodeAt(i);
+          if (code >= 48 && code <= 57) digits++;
+          if (digits >= intDigitsBeforeCaret) {
+            const pos = i + 1;
+            el.setSelectionRange(pos, pos);
+            return;
+          }
+        }
+        el.setSelectionRange(v.length, v.length);
+      }
+
+      function parseInputNumber(raw) {
+        const s = sanitizeMoneyRaw(raw);
+        if (!s) return 0;
+
+        const { index: sepIndex } = getDecimalInfo(s);
+
+        let intPart = s;
+        let fracPart = "";
+        if (sepIndex !== -1) {
+          intPart = s.slice(0, sepIndex);
+          fracPart = s.slice(sepIndex + 1);
+        }
+
+        intPart = intPart.replace(/[.,]/g, "");
+        fracPart = fracPart.replace(/[.,]/g, "").slice(0, 2);
+
+        const normalized = fracPart ? `${intPart}.${fracPart}` : intPart;
+        const n = Number(normalized);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function formatInputNumber(value) {
+        const n = Number(value || 0) || 0;
+        if (!(n > 0)) return "";
+        return inputNumberFormatter.format(n);
+      }
+
+      function moneyInputOnFocus(e) {
+        const el = e.currentTarget;
+        const n = parseInputNumber(el.value);
+        if (!(n > 0)) el.value = "";
+      }
+
+      function moneyInputOnInput(e) {
+        const el = e.currentTarget;
+        const raw = String(el.value || "");
+        const sel = el.selectionStart ?? raw.length;
+
+        const cleaned = sanitizeMoneyRaw(raw);
+        const { index: sepIndex } = getDecimalInfo(cleaned);
+
+        const beforeCaret = cleaned.slice(0, sel);
+        const afterDecimal = sepIndex !== -1 && sel > sepIndex;
+
+        const intDigitsBeforeCaret = afterDecimal ? countDigits(cleaned.slice(0, sepIndex)) : countDigits(beforeCaret);
+        const decDigitsBeforeCaret = afterDecimal ? countDigits(cleaned.slice(sepIndex + 1, sel)) : 0;
+
+        const next = formatMoneyTyping(cleaned);
+        el.value = next.value;
+
+        if (next.hasDecimal && afterDecimal) {
+          const commaIndex = el.value.indexOf(",");
+          const pos = commaIndex === -1 ? el.value.length : Math.min(el.value.length, commaIndex + 1 + decDigitsBeforeCaret);
+          el.setSelectionRange(pos, pos);
+          return;
+        }
+
+        setCaretByIntDigits(el, intDigitsBeforeCaret);
+      }
+
+      function moneyInputOnBlur(e) {
+        const el = e.currentTarget;
+        const n = parseInputNumber(el.value);
+        el.value = formatInputNumber(n);
+        if (el.dataset.moneyScope === "income") onIncomeInput();
+      }
+
+      function readMepCache() {
+        try {
+          const raw = localStorage.getItem(MEP_CACHE_KEY);
+          const parsed = JSON.parse(raw || "{}");
+          const sell = Number(parsed?.sell || 0) || 0;
+          const fetchedAt = Number(parsed?.fetchedAt || 0) || 0;
+          return { sell, fetchedAt };
+        } catch {
+          return { sell: 0, fetchedAt: 0 };
+        }
+      }
+
+      function writeMepCache(sell) {
+        localStorage.setItem(MEP_CACHE_KEY, JSON.stringify({ sell, fetchedAt: Date.now() }));
+      }
+
+      function setMepSell(nextSell) {
+        mepSell = Number(nextSell || 0) || 0;
+        if (elMepRate) elMepRate.textContent = mepSell > 0 ? formatRate(mepSell) : "—";
+        if (mepSell > 0) writeMepCache(mepSell);
+      }
+
+      function formatYmdPath(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}/${m}/${d}`;
+      }
+
+      async function fetchMepSellFromArgentinaDatos(date) {
+        const url = `https://api.argentinadatos.com/v1/cotizaciones/dolares/bolsa/${formatYmdPath(date)}`;
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) throw new Error("mep_fetch_failed");
+        const j = await r.json();
+        const sell = Number(j?.venta ?? j?.sell ?? j?.value_sell ?? 0) || 0;
+        if (!(sell > 0)) throw new Error("mep_value_missing");
+        return sell;
+      }
+
+      async function fetchMepSell() {
+        const dt = new Date();
+        for (let i = 0; i < 8; i++) {
+          try {
+            return await fetchMepSellFromArgentinaDatos(dt);
+          } catch {
+            dt.setDate(dt.getDate() - 1);
+          }
+        }
+        throw new Error("mep_fetch_failed");
+      }
+
+      async function loadMepSell({ force = false } = {}) {
+        const { sell, fetchedAt } = readMepCache();
+        const ageMs = Date.now() - (fetchedAt || 0);
+        const isFresh = sell > 0 && ageMs < 6 * 60 * 60 * 1000;
+        if (isFresh && !force) setMepSell(sell);
+
+        if (elRefreshMepBtn) elRefreshMepBtn.disabled = true;
+        try {
+          const live = await fetchMepSell();
+          setMepSell(live);
+        } catch {
+          if (sell > 0) setMepSell(sell);
+        } finally {
+          if (elRefreshMepBtn) elRefreshMepBtn.disabled = false;
+        }
+      }
+
+      function readIncomeSplit() {
+        try {
+          const raw = localStorage.getItem(INCOME_SPLIT_KEY);
+          const parsed = JSON.parse(raw || "{}");
+          const p = (val) => Number(val || 0) || 0;
+          return {
+            agos: {
+              mercadopago: p(parsed?.agos?.mercadopago),
+              naranja: p(parsed?.agos?.naranja),
+              personal: p(parsed?.agos?.personal),
+              dolares: p(parsed?.agos?.dolares),
+            },
+            emi: {
+              mercadopago: p(parsed?.emi?.mercadopago),
+              naranja: p(parsed?.emi?.naranja),
+              personal: p(parsed?.emi?.personal),
+              santander: p(parsed?.emi?.santander),
+              dolares: p(parsed?.emi?.dolares),
+            },
+            efectivo: {
+              pesos: p(parsed?.efectivo?.pesos),
+              dolares: p(parsed?.efectivo?.dolares),
+            },
+          };
+        } catch {
+          return {
+            agos: { mercadopago: 0, naranja: 0, personal: 0, dolares: 0 },
+            emi: { mercadopago: 0, naranja: 0, personal: 0, santander: 0, dolares: 0 },
+            efectivo: { pesos: 0, dolares: 0 },
+          };
+        }
+      }
+
+      function writeIncomeSplit(state) {
+        localStorage.setItem(INCOME_SPLIT_KEY, JSON.stringify(state || {}));
+      }
+
+      function hydrateIncomeInputs() {
+        const state = readIncomeSplit();
+        for (const section of Object.keys(incomeInputs)) {
+          for (const key of Object.keys(incomeInputs[section])) {
+            const el = incomeInputs?.[section]?.[key];
+            if (!el) continue;
+            el.value = formatInputNumber(state?.[section]?.[key] ?? 0);
+          }
+        }
+      }
+
+      function readIncomeInputs() {
+        const n = (el) => parseInputNumber(el?.value);
+        return {
+          agos: {
+            mercadopago: n(incomeInputs.agos.mercadopago),
+            naranja: n(incomeInputs.agos.naranja),
+            personal: n(incomeInputs.agos.personal),
+            dolares: n(incomeInputs.agos.dolares),
+          },
+          emi: {
+            mercadopago: n(incomeInputs.emi.mercadopago),
+            naranja: n(incomeInputs.emi.naranja),
+            personal: n(incomeInputs.emi.personal),
+            santander: n(incomeInputs.emi.santander),
+            dolares: n(incomeInputs.emi.dolares),
+          },
+          efectivo: {
+            pesos: n(incomeInputs.efectivo.pesos),
+            dolares: n(incomeInputs.efectivo.dolares),
+          },
+        };
+      }
+
+      function sumAgosEmi(p) {
+        return (
+          (Number(p?.mercadopago || 0) || 0) +
+          (Number(p?.naranja || 0) || 0) +
+          (Number(p?.personal || 0) || 0) +
+          (Number(p?.santander || 0) || 0) +
+          ((Number(p?.dolares || 0) || 0) * (Number(mepSell || 0) || 0))
+        );
+      }
+
+      function sumEfectivo(p) {
+        return (
+          (Number(p?.pesos || 0) || 0) +
+          ((Number(p?.dolares || 0) || 0) * (Number(mepSell || 0) || 0))
+        );
+      }
+
+      function renderIncomeSummary() {
+        const state = readIncomeInputs();
+        const agosTotal = sumAgosEmi(state.agos);
+        const emiTotal = sumAgosEmi(state.emi);
+        const efectivoTotal = sumEfectivo(state.efectivo);
+        const total = agosTotal + emiTotal + efectivoTotal;
+
+        if (elAgosTotal) elAgosTotal.textContent = formatMoney(agosTotal);
+        if (elEmiTotal) elEmiTotal.textContent = formatMoney(emiTotal);
+        if (elEfectivoTotal) elEfectivoTotal.textContent = formatMoney(efectivoTotal);
+
+        elWIncome.textContent = formatMoney(total);
+        elWExpense.textContent = formatMoney(0);
+        elWBalance.textContent = formatMoney(total);
+        elSummaryLabel.textContent = `Agos: ${formatMoney(agosTotal)} · Emi: ${formatMoney(emiTotal)} · Efectivo: ${formatMoney(efectivoTotal)}`;
+      }
+
+      function onIncomeInput() {
+        const state = readIncomeInputs();
+        writeIncomeSplit(state);
+        renderIncomeSummary();
+      }
+
+      function setActiveTab(next) {
+        activeTab = next === "expense" ? "expense" : "income";
+        localStorage.setItem(ACTIVE_TAB_KEY, activeTab);
+
+        const isIncome = activeTab === "income";
+        elTabIncomeBtn.setAttribute("aria-selected", String(isIncome));
+        elTabExpenseBtn.setAttribute("aria-selected", String(!isIncome));
+        elTabIncomeBtn.classList.toggle("is-active", isIncome);
+        elTabExpenseBtn.classList.toggle("is-active", !isIncome);
+
+        elTabIncomePanel.hidden = !isIncome;
+        elTabExpensePanel.hidden = isIncome;
+
+        if (isIncome) {
+          renderIncomeSummary();
+        } else {
+          refresh();
+        }
+      }
+
+      function readTransactions() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const arr = JSON.parse(raw || "[]");
+          if (!Array.isArray(arr)) return [];
+          return arr
+            .map((t) => ({
+              id: String(t?.id || ""),
+              type: t?.type === "expense" ? "expense" : "income",
+              date: String(t?.date || ""),
+              amount: Number(t?.amount || 0) || 0,
+              category: String(t?.category || ""),
+              note: String(t?.note || ""),
+              createdAt: Number(t?.createdAt || 0) || 0,
+              updatedAt: Number(t?.updatedAt || 0) || 0,
+            }))
+            .filter((t) => t.id && t.date);
+        } catch {
+          return [];
+        }
+      }
+
+      function writeTransactions(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list || []));
+      }
+
+      function newId() {
+        return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      }
+
+      function getFilters() {
+        const month = String(elFilterMonth.value || "");
+        const type = String(elFilterType.value || "all");
+        const text = String(elFilterText.value || "").trim().toLowerCase();
+        return { month, type, text };
+      }
+
+      function applyFilters(list, filters) {
+        return (list || [])
+          .filter((t) => {
+            if (filters.month && !String(t.date).startsWith(filters.month)) return false;
+            if (filters.type !== "all" && t.type !== filters.type) return false;
+            if (filters.text) {
+              const hay = `${t.category} ${t.note}`.toLowerCase();
+              if (!hay.includes(filters.text)) return false;
+            }
+            return true;
+          })
+          .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0));
+      }
+
+      function renderSummary(list, filters) {
+        if (activeTab !== "expense") return;
+        let income = 0;
+        let expense = 0;
+        for (const t of list) {
+          if (t.type === "expense") expense += Number(t.amount || 0) || 0;
+          else income += Number(t.amount || 0) || 0;
+        }
+        const balance = income - expense;
+        elWIncome.textContent = formatMoney(0);
+        elWExpense.textContent = formatMoney(expense);
+        elWBalance.textContent = formatMoney(-expense);
+
+        const parts = [];
+        if (filters.month) parts.push(`Mes: ${filters.month}`);
+        if (filters.type !== "all") parts.push(`Tipo: ${filters.type === "income" ? "Ingreso" : "Gasto"}`);
+        if (filters.text) parts.push(`Búsqueda: "${filters.text}"`);
+        elSummaryLabel.textContent = parts.length ? parts.join(" · ") : "Mostrando gastos";
+      }
+
+      function makeTxItem(t) {
+        const item = document.createElement("div");
+        item.className = "tx-item";
+        item.dataset.id = t.id;
+
+        const left = document.createElement("div");
+        left.className = "tx-left";
+
+        const title = document.createElement("div");
+        title.className = "tx-title";
+        title.textContent = t.note || "(sin detalle)";
+
+        const meta = document.createElement("div");
+        meta.className = "subtitle";
+        meta.textContent = `${t.date}${t.category ? " · " + t.category : ""}`;
+
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        const right = document.createElement("div");
+        right.className = "tx-right";
+
+        const amount = document.createElement("div");
+        amount.className = `tx-amount ${t.type === "expense" ? "is-expense" : "is-income"}`;
+        amount.textContent = `${t.type === "expense" ? "−" : "+"}${formatMoney(t.amount)}`;
+
+        const actions = document.createElement("div");
+        actions.className = "tx-actions";
+
+        const btnEdit = document.createElement("button");
+        btnEdit.type = "button";
+        btnEdit.className = "icon-btn";
+        btnEdit.title = "Editar";
+        btnEdit.ariaLabel = "Editar";
+        btnEdit.textContent = "✎";
+        btnEdit.addEventListener("click", () => startEdit(t.id));
+
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.className = "icon-btn";
+        btnDel.title = "Borrar";
+        btnDel.ariaLabel = "Borrar";
+        btnDel.textContent = "✕";
+        btnDel.addEventListener("click", () => deleteTx(t.id));
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDel);
+
+        right.appendChild(amount);
+        right.appendChild(actions);
+
+        item.appendChild(left);
+        item.appendChild(right);
+
+        return item;
+      }
+
+      function renderList(list) {
+        elTxList.innerHTML = "";
+        if (!list.length) {
+          elEmptyState.style.display = "block";
+          return;
+        }
+        elEmptyState.style.display = "none";
+        for (const t of list) elTxList.appendChild(makeTxItem(t));
+      }
+
+      function refresh() {
+        const all = readTransactions();
+        const filters = getFilters();
+        const filtered = applyFilters(all, filters);
+        renderSummary(filtered, filters);
+        renderList(filtered);
+      }
+
+      function resetForm() {
+        editingId = null;
+        elForm.reset();
+        elType.value = "expense";
+        elDate.value = toLocalDateString();
+        elSaveBtn.textContent = "Guardar";
+        elCancelEditBtn.style.display = "none";
+      }
+
+      function startEdit(id) {
+        const all = readTransactions();
+        const t = all.find((x) => x.id === id);
+        if (!t) return;
+        editingId = t.id;
+        elType.value = t.type;
+        elDate.value = t.date;
+        elAmount.value = formatInputNumber(t.amount || 0);
+        elCategory.value = t.category || "";
+        elNote.value = t.note || "";
+        elSaveBtn.textContent = "Actualizar";
+        elCancelEditBtn.style.display = "block";
+        elAmount.focus();
+      }
+
+      function deleteTx(id) {
+        const all = readTransactions();
+        const t = all.find((x) => x.id === id);
+        if (!t) return;
+        const ok = confirm("¿Borrar este movimiento?");
+        if (!ok) return;
+        const next = all.filter((x) => x.id !== id);
+        writeTransactions(next);
+        if (editingId === id) resetForm();
+        refresh();
+      }
+
+      function onSubmit(e) {
+        e.preventDefault();
+        const type = "expense";
+        const date = String(elDate.value || "").trim();
+        const amount = parseInputNumber(elAmount.value);
+        const category = String(elCategory.value || "").trim();
+        const note = String(elNote.value || "").trim();
+
+        if (!date || !(amount > 0)) return;
+
+        const all = readTransactions();
+        const now = Date.now();
+
+        if (editingId) {
+          const idx = all.findIndex((t) => t.id === editingId);
+          if (idx >= 0) {
+            all[idx] = {
+              ...all[idx],
+              type,
+              date,
+              amount,
+              category,
+              note,
+              updatedAt: now,
+            };
+          }
+        } else {
+          all.push({
+            id: newId(),
+            type,
+            date,
+            amount,
+            category,
+            note,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+
+        writeTransactions(all);
+        resetForm();
+        refresh();
+      }
+
+      function downloadText(filename, text) {
+        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function exportJson() {
+        const all = readTransactions();
+        const payload = { version: 1, exportedAt: new Date().toISOString(), items: all };
+        downloadText(`ingresos-gastos_${toLocalDateString()}.json`, JSON.stringify(payload, null, 2));
+      }
+
+      function exportCsv() {
+        const all = readTransactions();
+        const lines = [];
+        lines.push(["id", "type", "date", "amount", "category", "note", "createdAt", "updatedAt"].join(","));
+        for (const t of all) {
+          const row = [
+            t.id,
+            t.type,
+            t.date,
+            String(Number(t.amount || 0) || 0),
+            String(t.category || "").replaceAll('"', '""'),
+            String(t.note || "").replaceAll('"', '""'),
+            String(t.createdAt || 0),
+            String(t.updatedAt || 0),
+          ].map((v) => `"${String(v)}"`);
+          lines.push(row.join(","));
+        }
+        downloadText(`ingresos-gastos_${toLocalDateString()}.csv`, lines.join("\n"));
+      }
+
+      async function importJsonFile(file) {
+        if (!file) return;
+        const text = await file.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          alert("JSON inválido");
+          return;
+        }
+
+        const items = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.items) ? parsed.items : [];
+        if (!items.length) {
+          alert("No se encontraron movimientos en el archivo");
+          return;
+        }
+
+        const normalized = items
+          .map((t) => ({
+            id: String(t?.id || ""),
+            type: t?.type === "expense" ? "expense" : "income",
+            date: String(t?.date || ""),
+            amount: Number(t?.amount || 0) || 0,
+            category: String(t?.category || ""),
+            note: String(t?.note || ""),
+            createdAt: Number(t?.createdAt || 0) || Date.now(),
+            updatedAt: Number(t?.updatedAt || 0) || Date.now(),
+          }))
+          .filter((t) => t.id && t.date && (Number(t.amount) || 0) >= 0);
+
+        if (!normalized.length) {
+          alert("No se pudieron importar movimientos válidos");
+          return;
+        }
+
+        const ok = confirm(`Se importarán ${normalized.length} movimientos. ¿Continuar?`);
+        if (!ok) return;
+
+        const byId = new Map(readTransactions().map((t) => [t.id, t]));
+        for (const t of normalized) byId.set(t.id, t);
+        writeTransactions(Array.from(byId.values()));
+        refresh();
+      }
+
+      function clearAll() {
+        const ok = confirm("¿Borrar todos los movimientos guardados en este navegador?");
+        if (!ok) return;
+        writeTransactions([]);
+        resetForm();
+        refresh();
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        elDate.value = toLocalDateString();
+        elFilterMonth.value = toMonthString();
+        elType.value = "expense";
+        elFilterType.value = "expense";
+
+        const cached = readMepCache();
+        if (cached.sell > 0) setMepSell(cached.sell);
+        loadMepSell({ force: false }).then(() => {
+          if (activeTab === "income") renderIncomeSummary();
+        });
+        if (elRefreshMepBtn) {
+          elRefreshMepBtn.addEventListener("click", async () => {
+            await loadMepSell({ force: true });
+            if (activeTab === "income") renderIncomeSummary();
+          });
+        }
+
+        hydrateIncomeInputs();
+        for (const section of Object.keys(incomeInputs)) {
+          for (const key of Object.keys(incomeInputs[section])) {
+            const el = incomeInputs?.[section]?.[key];
+            if (!el) continue;
+            el.addEventListener("focus", moneyInputOnFocus);
+            el.addEventListener("input", moneyInputOnInput);
+            el.addEventListener("blur", moneyInputOnBlur);
+            el.addEventListener("input", onIncomeInput);
+            el.addEventListener("change", onIncomeInput);
+          }
+        }
+
+        if (elAmount) {
+          elAmount.addEventListener("focus", moneyInputOnFocus);
+          elAmount.addEventListener("input", moneyInputOnInput);
+          elAmount.addEventListener("blur", moneyInputOnBlur);
+        }
+
+        elTabIncomeBtn.addEventListener("click", () => setActiveTab("income"));
+        elTabExpenseBtn.addEventListener("click", () => setActiveTab("expense"));
+
+        const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
+        setActiveTab(savedTab === "expense" ? "expense" : "income");
+
+        refresh();
+
+        elForm.addEventListener("submit", onSubmit);
+        elCancelEditBtn.addEventListener("click", () => {
+          resetForm();
+          refresh();
+        });
+
+        [elFilterMonth, elFilterType, elFilterText].forEach((el) => {
+          el.addEventListener("input", refresh);
+          el.addEventListener("change", refresh);
+        });
+
+        elExportJsonBtn.addEventListener("click", exportJson);
+        elExportCsvBtn.addEventListener("click", exportCsv);
+        elClearAllBtn.addEventListener("click", clearAll);
+        elImportJsonInput.addEventListener("change", async (e) => {
+          const file = e.target.files?.[0];
+          await importJsonFile(file);
+          e.target.value = "";
+        });
+      });
+    </script>
+  </body>
+</html>
