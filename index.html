@@ -1285,8 +1285,14 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         document.getElementById("mTotalRevenue").textContent = "$" + data.totalRevenue.toLocaleString("es-AR");
         document.getElementById("mTotalOrders").textContent = data.totalOrders.toLocaleString("es-AR");
         document.getElementById("mTicketAvg").textContent = "$" + data.ticketPromedio.toLocaleString("es-AR");
-        document.getElementById("mBestDayOrders").textContent = data.bestDayOrders.day ? `${data.bestDayOrders.count} ped (${data.bestDayOrders.day})` : "-";
-        document.getElementById("mBestDayRevenue").textContent = data.bestDayRevenue.day ? `$${data.bestDayRevenue.revenue.toLocaleString("es-AR")} (${data.bestDayRevenue.day})` : "-";
+        const formatShortDate = (str) => {
+          if (!str) return "";
+          const d = new Date(str + "T12:00:00");
+          const days = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+          return `${days[d.getDay()]}, ${d.getDate()}`;
+        };
+        document.getElementById("mBestDayOrders").textContent = data.bestDayOrders.day ? `${data.bestDayOrders.count} ped (${formatShortDate(data.bestDayOrders.day)})` : "-";
+        document.getElementById("mBestDayRevenue").textContent = data.bestDayRevenue.day ? `$${data.bestDayRevenue.revenue.toLocaleString("es-AR")} (${formatShortDate(data.bestDayRevenue.day)})` : "-";
 
         const revGrowth = data.revGrowth || 0;
         const ordersGrowth = data.ordersGrowth || 0;
