@@ -1494,17 +1494,16 @@ document.addEventListener("DOMContentLoaded", () => {
       let dayLabel = "";
       const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
-      if (currentHourlyDay === "all") {
+        if (currentHourlyDay === "all") {
         hourlyData = data.hourlyData;
         hourlyDaySummary.style.display = "none";
       } else {
         const dayIdx = parseInt(currentHourlyDay);
         hourlyData = data.hourlyByDay[dayIdx] || [];
         const dayInfo = data.daySummary.find(d => d.dayIndex === dayIdx);
-        const avgOrders = dayInfo && dayInfo.orders > 0 ? (dayInfo.orders / 4.3).toFixed(1) : "0";
-        const avgRevenue = dayInfo && dayInfo.revenue > 0 ? "$" + Math.round(dayInfo.revenue / 4.3).toLocaleString("es-AR") : "$0";
+        const daysCount = dayInfo?.daysCount || 1;
         dayLabel = dayNames[dayIdx];
-        hourlyDaySummaryText.innerHTML = `<strong>${dayInfo?.orders || 0}</strong> pedidos, <strong>${dayInfo?.revenue ? '$' + dayInfo.revenue.toLocaleString("es-AR") : '$0'}</strong> total &nbsp;|&nbsp; ~<strong>${avgOrders}</strong> ped/sem, ~<strong>${avgRevenue}</strong>/sem`;
+        hourlyDaySummaryText.innerHTML = `<strong>${daysCount}</strong> ${dayNames[dayIdx]}s en el mes &nbsp;|&nbsp; avg: <strong>${dayInfo?.avgOrders || 0}</strong> ped/día, <strong>${dayInfo?.revenue ? '$' + Math.round(dayInfo.revenue / daysCount).toLocaleString("es-AR") : '$0'}</strong>/día`;
         hourlyDaySummary.style.display = "block";
       }
 
@@ -1529,12 +1528,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderHourlyRow(hour, data) {
-      const isActive = data.orders > 0;
+      const isActive = data.avgOrders > 0;
       const label = data.label;
       return `
         <div class="hourly-row ${isActive ? 'hour-active' : 'no-data'}">
           <div class="hourly-hour">${label}</div>
-          <div class="hourly-orders">${data.orders}</div>
+          <div class="hourly-orders">${data.avgOrders}</div>
           <div class="hourly-revenue">${data.revenue > 0 ? '$' + data.revenue.toLocaleString("es-AR") : '-'}</div>
         </div>
       `;

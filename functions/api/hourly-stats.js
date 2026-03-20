@@ -65,17 +65,32 @@ export async function onRequestGet({ request, env }) {
     // Stats por día de la semana: 0=domingo, 1=lunes, ..., 6=sábado
     const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
     const dayStats = {};
-    const hourlyByDay = {}; // { dayIndex: { hour: { orders, revenue } } }
+    const hourlyByDay = {};
+    const daysCountInMonth = {}; // cuántos días de cada tipo hubo en el mes
     
     for (let d = 0; d < 7; d++) {
       dayStats[d] = { orders: 0, revenue: 0, name: dayNames[d] };
       hourlyByDay[d] = {};
+      daysCountInMonth[d] = 0;
       for (const hour of hourSlots) {
         hourlyByDay[d][hour] = { orders: 0, revenue: 0 };
       }
     }
 
     const TIMEZONE_OFFSET = -3; // Servidor UTC, Argentina UTC-3
+
+    // Contar cuántos días de cada tipo hubo en el mes
+    const uniqueDays = new Set();
+    for (const order of allOrders) {
+      const serverDate = new Date(order.created);
+      const localDate = new Date(serverDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000);
+      const dayIndex = localDate.getDay();
+      uniqueDays.add(`${dayIndex}-${localDate.getDate()}`);
+    }
+    for (const key of uniqueDays) {
+      const dayIndex = parseInt(key.split("-")[0]);
+      daysCountInMonth[dayIndex]++;
+    }
 
     for (const order of allOrders) {
       const serverDate = new Date(order.created);
@@ -97,11 +112,13 @@ export async function onRequestGet({ request, env }) {
       }
     }
 
-    // Convertir a array ordenado
+    // Convertir a array ordenado con promedio
+    const totalDays = uniqueDays.size;
     const result = hourSlots.map(hour => ({
       hour,
       label: hourlyStats[hour].label,
       orders: hourlyStats[hour].orders,
+      avgOrders: totalDays > 0 ? Math.round((hourlyStats[hour].orders / totalDays) * 10) / 10 : 0,
       revenue: Math.round(hourlyStats[hour].revenue)
     }));
 
@@ -110,15 +127,19 @@ export async function onRequestGet({ request, env }) {
       dayIndex: idx,
       name,
       orders: dayStats[idx].orders,
+      daysCount: daysCountInMonth[idx],
+      avgOrders: daysCountInMonth[idx] > 0 ? Math.round((dayStats[idx].orders / daysCountInMonth[idx]) * 10) / 10 : 0,
       revenue: Math.round(dayStats[idx].revenue)
     }));
 
     const hourlyByDayResult = {};
     for (const [dayIdx, hours] of Object.entries(hourlyByDay)) {
+      const dayCount = daysCountInMonth[dayIdx] || 1;
       hourlyByDayResult[dayIdx] = hourSlots.map(hour => ({
         hour,
         label: hour === 0 ? "00" : String(hour).padStart(2, "0"),
         orders: hours[hour].orders,
+        avgOrders: dayCount > 0 ? Math.round((hours[hour].orders / dayCount) * 10) / 10 : 0,
         revenue: Math.round(hours[hour].revenue)
       }));
     }
