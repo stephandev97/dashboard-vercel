@@ -52,7 +52,7 @@ export async function onRequestGet({ request, env }) {
       return 0;
     };
 
-    // Horas del negocio: 12 a 02 (considerando que 00-02 es el día siguiente)
+    // Horas del negocio: 12 a 02 (considerando que 00-02 es el día siguiente en horario local argentino)
     // Definimos 14 slots: 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 00, 01
     const hourSlots = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1];
     const hourlyStats = {};
@@ -62,18 +62,20 @@ export async function onRequestGet({ request, env }) {
       hourlyStats[hour] = { orders: 0, revenue: 0, label: `${label}:00` };
     }
 
+    const TIMEZONE_OFFSET = -3; // Servidor UTC, Argentina UTC-3
+
     for (const order of allOrders) {
-      const created = new Date(order.created);
-      const hour = created.getHours();
+      const serverDate = new Date(order.created);
+      // Convertir hora del servidor a hora local argentina restando el offset
+      const localHour = serverDate.getHours() + TIMEZONE_OFFSET;
       
-      // Si es entre 0 y 2, es "la madrugada" (sigue siendo el turno nocturno)
-      // Los pedidos de 00-02hs se consideran parte del turno que empezó el día anterior
-      // Pero en términos de businessDate, los de 00-02 pertenecen al día anterior
-      // Asumimos que el usuario quiere ver las horas tal como vienen
+      // Normalizar hora (si es negativo, sumar 24 y ajustar al día anterior si es necesario)
+      let adjustedHour = localHour;
+      if (adjustedHour < 0) adjustedHour += 24;
       
-      if (hourlyStats[hour] !== undefined) {
-        hourlyStats[hour].orders += 1;
-        hourlyStats[hour].revenue += getOrderTotal(order);
+      if (hourlyStats[adjustedHour] !== undefined) {
+        hourlyStats[adjustedHour].orders += 1;
+        hourlyStats[adjustedHour].revenue += getOrderTotal(order);
       }
     }
 
