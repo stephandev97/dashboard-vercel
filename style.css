@@ -1461,6 +1461,151 @@ details[open] .accordion-summary .chev {
   font-weight: 600;
 }
 
+.hourly-view-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.hourly-view-tab {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--pixel-border);
+  background: rgba(var(--pixel-bg-rgb), 0.4);
+  color: var(--pixel-text-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hourly-view-tab:hover {
+  background: rgba(var(--pixel-bg-rgb), 0.6);
+  color: var(--pixel-text);
+}
+
+.hourly-view-tab.active {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: var(--pixel-accent);
+  color: var(--pixel-accent);
+}
+
+/* Matrix View */
+.hourly-matrix {
+  overflow-x: auto;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+
+.hourly-matrix table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+  min-width: 600px;
+}
+
+.hourly-matrix th,
+.hourly-matrix td {
+  padding: 0.4rem 0.25rem;
+  text-align: center;
+  border: 1px solid var(--pixel-border-soft);
+}
+
+.hourly-matrix th {
+  background: rgba(var(--pixel-bg-rgb), 0.5);
+  color: var(--pixel-text-soft);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.hourly-matrix th.hour-col {
+  min-width: 36px;
+  font-size: 0.65rem;
+}
+
+.hourly-matrix th.day-col {
+  text-align: left;
+  padding-left: 0.5rem;
+  min-width: 50px;
+}
+
+.hourly-matrix th.total-col {
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--pixel-accent);
+}
+
+.hourly-matrix td {
+  background: rgba(var(--pixel-bg-rgb), 0.3);
+}
+
+.hourly-matrix td.hour-cell {
+  font-weight: 500;
+}
+
+.hourly-matrix td.day-name {
+  text-align: left;
+  padding-left: 0.5rem;
+  font-weight: 600;
+  color: var(--pixel-text);
+  background: rgba(var(--pixel-bg-rgb), 0.4);
+}
+
+.hourly-matrix td.total-cell {
+  background: rgba(74, 222, 128, 0.08);
+  font-weight: 700;
+  color: var(--pixel-accent);
+}
+
+.hourly-matrix td.hour-total-cell {
+  background: rgba(74, 222, 128, 0.05);
+  font-weight: 700;
+  color: var(--pixel-text);
+}
+
+.hourly-matrix td:hover {
+  background: rgba(var(--pixel-bg-rgb), 0.5);
+}
+
+.hourly-matrix .cell-orders {
+  display: block;
+  font-weight: 700;
+  color: var(--pixel-text);
+}
+
+.hourly-matrix .cell-revenue {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--pixel-text-soft);
+}
+
+.hourly-matrix .no-data {
+  color: var(--pixel-text-soft);
+  opacity: 0.4;
+}
+
+.hourly-matrix-loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--pixel-text-soft);
+}
+
+.hourly-matrix-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--pixel-border-soft);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--pixel-text-soft);
+}
+
+.hourly-matrix-footer strong {
+  color: var(--pixel-accent);
+}
+
 @media (max-width: 480px) {
   .hourly-grid {
     grid-template-columns: repeat(7, 1fr);

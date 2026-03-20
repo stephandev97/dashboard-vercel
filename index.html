@@ -150,7 +150,11 @@
             <span id="hourlyMonthLabel" class="month-name"></span>
             <button id="nextHourlyMonth" class="icon-btn" aria-label="Mes siguiente">›</button>
           </div>
-          <div class="hourly-summary">
+          <div class="hourly-view-tabs" id="hourlyViewTabs">
+            <button class="hourly-view-tab active" data-view="cards">Resumen</button>
+            <button class="hourly-view-tab" data-view="matrix">Matriz</button>
+          </div>
+          <div class="hourly-summary" id="hourlySummaryCards">
             <div class="hourly-summary-item">
               <div class="hourly-summary-label">Total Pedidos</div>
               <div id="hourlyTotalOrders" class="hourly-summary-value">0</div>
@@ -177,6 +181,9 @@
           </div>
           <div class="hourly-grid" id="hourlyGrid">
             <div class="hourly-loading">Cargando...</div>
+          </div>
+          <div class="hourly-matrix" id="hourlyMatrix" style="display:none">
+            <div class="hourly-matrix-loading">Cargando...</div>
           </div>
         </div>
       </div>
@@ -1404,8 +1411,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const hourlyDayTabs = document.getElementById("hourlyDayTabs");
     const hourlyDaySummary = document.getElementById("hourlyDaySummary");
     const hourlyDaySummaryText = document.getElementById("hourlyDaySummaryText");
+    const hourlyViewTabs = document.getElementById("hourlyViewTabs");
+    const hourlySummaryCards = document.getElementById("hourlySummaryCards");
     let currentHourlyMonth = null;
     let currentHourlyDay = "all";
+    let currentHourlyView = "cards";
     let hourlyDataCache = null;
 
     function openHourlyModal() {
@@ -1421,6 +1431,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hourlyModalOverlay) {
       hourlyModalOverlay.addEventListener("click", (e) => {
         if (e.target === hourlyModalOverlay) closeHourlyModal();
+      });
+    }
+
+    if (hourlyViewTabs) {
+      hourlyViewTabs.addEventListener("click", (e) => {
+        const tab = e.target.closest(".hourly-view-tab");
+        if (!tab) return;
+        currentHourlyView = tab.dataset.view;
+        document.querySelectorAll(".hourly-view-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        
+        if (currentHourlyView === "cards") {
+          hourlySummaryCards.style.display = "grid";
+          hourlyDayTabs.style.display = "flex";
+          document.getElementById("hourlyGrid").style.display = "block";
+          document.getElementById("hourlyMatrix").style.display = "none";
+          renderHourlyGrid(hourlyDataCache);
+        } else {
+          hourlySummaryCards.style.display = "none";
+          hourlyDayTabs.style.display = "none";
+          hourlyDaySummary.style.display = "none";
+          document.getElementById("hourlyGrid").style.display = "none";
+          document.getElementById("hourlyMatrix").style.display = "block";
+          renderHourlyMatrix(hourlyDataCache);
+        }
       });
     }
 
@@ -1447,8 +1482,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadHourlyData() {
       const hourlyGrid = document.getElementById("hourlyGrid");
+      const hourlyMatrix = document.getElementById("hourlyMatrix");
       if (!hourlyGrid) return;
       hourlyGrid.innerHTML = '<div class="hourly-loading">Cargando...</div>';
+      if (hourlyMatrix) hourlyMatrix.innerHTML = '<div class="hourly-matrix-loading">Cargando...</div>';
 
       try {
         const url = "/api/hourly-stats?month=" + currentHourlyMonth;
@@ -1480,7 +1517,11 @@ document.addEventListener("DOMContentLoaded", () => {
         elRevenueGrowth.textContent = revenueGrowth > 0 ? `↑${revenueGrowth}% vs mes anterior` : revenueGrowth < 0 ? `↓${Math.abs(revenueGrowth)}% vs mes anterior` : "vs mes anterior";
         elRevenueGrowth.className = "hourly-summary-growth " + (revenueGrowth >= 0 ? "positive" : "negative");
 
-        renderHourlyGrid(data);
+        if (currentHourlyView === "cards") {
+          renderHourlyGrid(data);
+        } else {
+          renderHourlyMatrix(data);
+        }
       } catch (err) {
         hourlyGrid.innerHTML = '<div class="hourly-loading">Error: ' + escapeHtml(err?.message || err) + '</div>';
       }
@@ -1491,10 +1532,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!data || !hourlyGrid) return;
 
       let hourlyData;
-      let dayLabel = "";
       const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
-        if (currentHourlyDay === "all") {
+      if (currentHourlyDay === "all") {
         hourlyData = data.hourlyData;
         hourlyDaySummary.style.display = "none";
       } else {
@@ -1502,7 +1542,6 @@ document.addEventListener("DOMContentLoaded", () => {
         hourlyData = data.hourlyByDay[dayIdx] || [];
         const dayInfo = data.daySummary.find(d => d.dayIndex === dayIdx);
         const daysCount = dayInfo?.daysCount || 1;
-        dayLabel = dayNames[dayIdx];
         hourlyDaySummaryText.innerHTML = `<strong>${daysCount}</strong> ${dayNames[dayIdx]}s en el mes &nbsp;|&nbsp; avg: <strong>${dayInfo?.avgOrders || 0}</strong> ped/día, <strong>${dayInfo?.revenue ? '$' + Math.round(dayInfo.revenue / daysCount).toLocaleString("es-AR") : '$0'}</strong>/día`;
         hourlyDaySummary.style.display = "block";
       }
@@ -1537,6 +1576,102 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="hourly-revenue">${data.revenue > 0 ? '$' + data.revenue.toLocaleString("es-AR") : '-'}</div>
         </div>
       `;
+    }
+
+    function renderHourlyMatrix(data) {
+      const hourlyMatrix = document.getElementById("hourlyMatrix");
+      if (!data || !hourlyMatrix) return;
+
+      const activeHours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1];
+      const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+      const dayFullNames = ["domingos", "lunes", "martes", "miércoles", "jueves", "viernes", "sábados"];
+
+      let html = '<table>';
+      
+      // Header
+      html += '<thead><tr>';
+      html += '<th class="day-col">Día</th>';
+      for (const h of activeHours) {
+        const label = h === 0 ? "00" : String(h).padStart(2, "0");
+        html += `<th class="hour-col">${label}</th>`;
+      }
+      html += '<th class="total-col">Total</th>';
+      html += '</tr></thead>';
+
+      // Body
+      html += '<tbody>';
+      const hourTotals = {};
+      activeHours.forEach(h => hourTotals[h] = { orders: 0, revenue: 0 });
+      let grandTotalOrders = 0;
+      let grandTotalRevenue = 0;
+
+      for (let d = 0; d < 7; d++) {
+        const dayData = data.hourlyByDay[d] || [];
+        const dayInfo = data.daySummary.find(x => x.dayIndex === d);
+        const daysCount = dayInfo?.daysCount || 1;
+        let rowOrders = 0;
+        let rowRevenue = 0;
+
+        html += '<tr>';
+        html += `<td class="day-name">${dayNames[d]}</td>`;
+        
+        for (const h of activeHours) {
+          const hourData = dayData.find(x => x.hour === h) || { orders: 0, revenue: 0 };
+          const hasData = hourData.orders > 0;
+          
+          hourTotals[h].orders += hourData.orders;
+          hourTotals[h].revenue += hourData.revenue;
+          rowOrders += hourData.orders;
+          rowRevenue += hourData.revenue;
+
+          html += `<td class="hour-cell ${!hasData ? 'no-data' : ''}">`;
+          if (hasData) {
+            html += `<span class="cell-orders">${hourData.orders}</span>`;
+            html += `<span class="cell-revenue">$${(hourData.revenue / 1000).toFixed(0)}k</span>`;
+          } else {
+            html += `<span class="cell-orders">-</span>`;
+          }
+          html += '</td>';
+        }
+
+        grandTotalOrders += rowOrders;
+        grandTotalRevenue += rowRevenue;
+
+        html += `<td class="total-cell">`;
+        html += `<span class="cell-orders">${rowOrders}</span>`;
+        html += `<span class="cell-revenue">$${(rowRevenue / 1000).toFixed(0)}k</span>`;
+        html += '</td>';
+        html += '</tr>';
+      }
+
+      // Footer - hour totals
+      html += '<tr>';
+      html += '<td class="day-name">Total</td>';
+      for (const h of activeHours) {
+        const hasData = hourTotals[h].orders > 0;
+        html += `<td class="hour-total-cell ${!hasData ? 'no-data' : ''}">`;
+        if (hasData) {
+          html += `<span class="cell-orders">${hourTotals[h].orders}</span>`;
+          html += `<span class="cell-revenue">$${(hourTotals[h].revenue / 1000).toFixed(0)}k</span>`;
+        } else {
+          html += `<span class="cell-orders">-</span>`;
+        }
+        html += '</td>';
+      }
+      html += `<td class="total-cell">`;
+      html += `<span class="cell-orders">${grandTotalOrders}</span>`;
+      html += `<span class="cell-revenue">$${(grandTotalRevenue / 1000).toFixed(0)}k</span>`;
+      html += '</td>';
+      html += '</tr>';
+
+      html += '</tbody></table>';
+      
+      html += `<div class="hourly-matrix-footer">
+        <span>Totales del mes: <strong>${grandTotalOrders}</strong> pedidos, <strong>$${grandTotalRevenue.toLocaleString("es-AR")}</strong></span>
+        <span>Los montos están en miles (k)</span>
+      </div>`;
+
+      hourlyMatrix.innerHTML = html;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
