@@ -21,6 +21,12 @@
 <div class="controls">
       <span id="dayLabel" class="day-label"></span>
       <div class="nav-arrows">
+        <button id="hourlyStatsBtn" title="Stats por hora" class="icon-btn" aria-label="Stats por hora">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </button>
         <button id="monthStatsBtn" title="Estadísticas del mes" class="icon-btn" aria-label="Estadísticas del mes">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -128,6 +134,38 @@
         </div>
       </div>
       </div>
+      </div>
+    </div>
+
+    <!-- Modal Stats por Hora -->
+    <div id="hourlyModalOverlay" class="modal-overlay" aria-hidden="true">
+      <div class="modal hourly-modal">
+        <div class="modal-header">
+          <h4 class="modal-title">Pedidos por Hora</h4>
+          <button id="hourlyModalClose" title="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="hourly-header">
+            <button id="prevHourlyMonth" class="icon-btn" aria-label="Mes anterior">‹</button>
+            <span id="hourlyMonthLabel" class="month-name"></span>
+            <button id="nextHourlyMonth" class="icon-btn" aria-label="Mes siguiente">›</button>
+          </div>
+          <div class="hourly-summary">
+            <div class="hourly-summary-item">
+              <div class="hourly-summary-label">Total Pedidos</div>
+              <div id="hourlyTotalOrders" class="hourly-summary-value">0</div>
+              <div id="hourlyOrdersGrowth" class="hourly-summary-growth"></div>
+            </div>
+            <div class="hourly-summary-item">
+              <div class="hourly-summary-label">Recaudación</div>
+              <div id="hourlyTotalRevenue" class="hourly-summary-value">$0</div>
+              <div id="hourlyRevenueGrowth" class="hourly-summary-growth"></div>
+            </div>
+          </div>
+          <div class="hourly-grid" id="hourlyGrid">
+            <div class="hourly-loading">Cargando...</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1333,7 +1371,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       nextMonthBtn.addEventListener("click", () => changeMonth(1));
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
       const now = new Date();
       if (now.getDate() < 3) {
         now.setMonth(now.getMonth() - 1);
@@ -1341,6 +1379,119 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       now.setDate(1);
       currentMonth = getMonthString(now);
       loadMonthlyData();
+    });
+
+    /* ======= HOURLY STATS ======= */
+    const hourlyStatsBtn = document.getElementById("hourlyStatsBtn");
+    const hourlyModalOverlay = document.getElementById("hourlyModalOverlay");
+    const hourlyModalClose = document.getElementById("hourlyModalClose");
+    const hourlyMonthLabel = document.getElementById("hourlyMonthLabel");
+    const prevHourlyMonthBtn = document.getElementById("prevHourlyMonth");
+    const nextHourlyMonthBtn = document.getElementById("nextHourlyMonth");
+    let currentHourlyMonth = null;
+
+    function openHourlyModal() {
+      if (hourlyModalOverlay) hourlyModalOverlay.setAttribute("aria-hidden", "false");
+      loadHourlyData();
+    }
+    function closeHourlyModal() {
+      if (hourlyModalOverlay) hourlyModalOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    if (hourlyStatsBtn) hourlyStatsBtn.addEventListener("click", openHourlyModal);
+    if (hourlyModalClose) hourlyModalClose.addEventListener("click", closeHourlyModal);
+    if (hourlyModalOverlay) {
+      hourlyModalOverlay.addEventListener("click", (e) => {
+        if (e.target === hourlyModalOverlay) closeHourlyModal();
+      });
+    }
+
+    function changeHourlyMonth(delta) {
+      const dt = parseMonthString(currentHourlyMonth);
+      dt.setMonth(dt.getMonth() + delta);
+      currentHourlyMonth = getMonthString(dt);
+      loadHourlyData();
+    }
+
+    if (prevHourlyMonthBtn) prevHourlyMonthBtn.addEventListener("click", () => changeHourlyMonth(-1));
+    if (nextHourlyMonthBtn) nextHourlyMonthBtn.addEventListener("click", () => changeHourlyMonth(1));
+
+    async function loadHourlyData() {
+      const hourlyGrid = document.getElementById("hourlyGrid");
+      if (!hourlyGrid) return;
+      hourlyGrid.innerHTML = '<div class="hourly-loading">Cargando...</div>';
+
+      try {
+        const url = "/api/hourly-stats?month=" + currentHourlyMonth;
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          if (res.status === 404 && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
+            hourlyGrid.innerHTML = '<div class="hourly-loading">API no encontrada. Ejecutá el dev server.</div>';
+            return;
+          }
+          throw new Error(`${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.details);
+
+        hourlyMonthLabel.textContent = data.monthName;
+        document.getElementById("hourlyTotalOrders").textContent = data.totalOrders.toLocaleString("es-AR");
+        document.getElementById("hourlyTotalRevenue").textContent = "$" + data.totalRevenue.toLocaleString("es-AR");
+
+        const ordersGrowth = data.ordersGrowth || 0;
+        const revenueGrowth = data.revenueGrowth || 0;
+        const elOrdersGrowth = document.getElementById("hourlyOrdersGrowth");
+        const elRevenueGrowth = document.getElementById("hourlyRevenueGrowth");
+
+        elOrdersGrowth.textContent = ordersGrowth > 0 ? `↑${ordersGrowth}% vs mes anterior` : ordersGrowth < 0 ? `↓${Math.abs(ordersGrowth)}% vs mes anterior` : "vs mes anterior";
+        elOrdersGrowth.className = "hourly-summary-growth " + (ordersGrowth >= 0 ? "positive" : "negative");
+        elRevenueGrowth.textContent = revenueGrowth > 0 ? `↑${revenueGrowth}% vs mes anterior` : revenueGrowth < 0 ? `↓${Math.abs(revenueGrowth)}% vs mes anterior` : "vs mes anterior";
+        elRevenueGrowth.className = "hourly-summary-growth " + (revenueGrowth >= 0 ? "positive" : "negative");
+
+        const activeHours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1];
+        let html = "";
+
+        html += '<div class="hourly-night-label">Mediodía</div>';
+        for (let i = 0; i < 7; i++) {
+          const h = activeHours[i];
+          const d = data.hourlyData.find(x => x.hour === h) || { orders: 0, revenue: 0, label: h + ":00" };
+          html += renderHourlyRow(h, d);
+        }
+
+        html += '<div class="hourly-night-label">Noche</div>';
+        for (let i = 7; i < 14; i++) {
+          const h = activeHours[i];
+          const d = data.hourlyData.find(x => x.hour === h) || { orders: 0, revenue: 0, label: h === 0 ? "00:00" : (h === 1 ? "01:00" : h + ":00") };
+          html += renderHourlyRow(h, d);
+        }
+
+        hourlyGrid.innerHTML = html;
+      } catch (err) {
+        hourlyGrid.innerHTML = '<div class="hourly-loading">Error: ' + escapeHtml(err?.message || err) + '</div>';
+      }
+    }
+
+    function renderHourlyRow(hour, data) {
+      const isActive = data.orders > 0;
+      const label = data.label;
+      return `
+        <div class="hourly-row ${isActive ? 'hour-active' : 'no-data'}">
+          <div class="hourly-hour">${label}</div>
+          <div class="hourly-orders">${data.orders}</div>
+          <div class="hourly-revenue">${data.revenue > 0 ? '$' + data.revenue.toLocaleString("es-AR") : '-'}</div>
+        </div>
+      `;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const now = new Date();
+      if (now.getDate() < 3) {
+        now.setMonth(now.getMonth() - 1);
+      }
+      now.setDate(1);
+      currentHourlyMonth = getMonthString(now);
     });
 
   </script>

@@ -1295,3 +1295,142 @@ a.icon-btn {
 details[open] .accordion-summary .chev {
   transform: rotate(180deg);
 }
+
+/* =================== HOURLY STATS =================== */
+.hourly-modal {
+  max-width: 520px;
+}
+
+.hourly-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hourly-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hourly-summary-item {
+  background: rgba(var(--pixel-bg-rgb), 0.5);
+  border: 1px solid var(--pixel-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.hourly-summary-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pixel-text-soft);
+  margin-bottom: 0.25rem;
+}
+
+.hourly-summary-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--pixel-accent);
+}
+
+.hourly-summary-growth {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.15rem;
+  color: var(--pixel-text-soft);
+}
+
+.hourly-summary-growth.positive {
+  color: var(--pixel-accent);
+}
+
+.hourly-summary-growth.negative {
+  color: #fb7185;
+}
+
+.hourly-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+
+.hourly-row {
+  background: rgba(var(--pixel-bg-rgb), 0.4);
+  border: 1px solid var(--pixel-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.35rem;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.hourly-row.hour-active {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.hourly-row.no-data {
+  opacity: 0.4;
+}
+
+.hourly-hour {
+  font-weight: 600;
+  color: var(--pixel-text);
+  margin-bottom: 0.25rem;
+}
+
+.hourly-orders {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pixel-accent);
+}
+
+.hourly-revenue {
+  font-size: 0.65rem;
+  color: var(--pixel-text-soft);
+  margin-top: 0.1rem;
+}
+
+.hourly-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  color: var(--pixel-text-soft);
+}
+
+.hourly-night-label {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--pixel-text-soft);
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 480px) {
+  .hourly-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.3rem;
+  }
+  
+  .hourly-row {
+    padding: 0.4rem 0.2rem;
+  }
+  
+  .hourly-hour {
+    font-size: 0.7rem;
+  }
+  
+  .hourly-orders {
+    font-size: 0.9rem;
+  }
+  
+  .hourly-revenue {
+    font-size: 0.6rem;
+  }
+}
