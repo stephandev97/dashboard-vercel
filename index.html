@@ -162,6 +162,19 @@
               <div id="hourlyRevenueGrowth" class="hourly-summary-growth"></div>
             </div>
           </div>
+          <div class="hourly-day-tabs" id="hourlyDayTabs">
+            <button class="hourly-day-tab active" data-day="all">Todos</button>
+            <button class="hourly-day-tab" data-day="0">Dom</button>
+            <button class="hourly-day-tab" data-day="1">Lun</button>
+            <button class="hourly-day-tab" data-day="2">Mar</button>
+            <button class="hourly-day-tab" data-day="3">Mié</button>
+            <button class="hourly-day-tab" data-day="4">Jue</button>
+            <button class="hourly-day-tab" data-day="5">Vie</button>
+            <button class="hourly-day-tab" data-day="6">Sáb</button>
+          </div>
+          <div id="hourlyDaySummary" class="hourly-day-summary" style="display:none">
+            <span id="hourlyDaySummaryText"></span>
+          </div>
           <div class="hourly-grid" id="hourlyGrid">
             <div class="hourly-loading">Cargando...</div>
           </div>
@@ -1388,7 +1401,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const hourlyMonthLabel = document.getElementById("hourlyMonthLabel");
     const prevHourlyMonthBtn = document.getElementById("prevHourlyMonth");
     const nextHourlyMonthBtn = document.getElementById("nextHourlyMonth");
+    const hourlyDayTabs = document.getElementById("hourlyDayTabs");
+    const hourlyDaySummary = document.getElementById("hourlyDaySummary");
+    const hourlyDaySummaryText = document.getElementById("hourlyDaySummaryText");
     let currentHourlyMonth = null;
+    let currentHourlyDay = "all";
+    let hourlyDataCache = null;
 
     function openHourlyModal() {
       if (hourlyModalOverlay) hourlyModalOverlay.setAttribute("aria-hidden", "false");
@@ -1403,6 +1421,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hourlyModalOverlay) {
       hourlyModalOverlay.addEventListener("click", (e) => {
         if (e.target === hourlyModalOverlay) closeHourlyModal();
+      });
+    }
+
+    if (hourlyDayTabs) {
+      hourlyDayTabs.addEventListener("click", (e) => {
+        const tab = e.target.closest(".hourly-day-tab");
+        if (!tab) return;
+        currentHourlyDay = tab.dataset.day;
+        document.querySelectorAll(".hourly-day-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        renderHourlyGrid(hourlyDataCache);
       });
     }
 
@@ -1436,6 +1465,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await res.json();
         if (data.error) throw new Error(data.details);
 
+        hourlyDataCache = data;
         hourlyMonthLabel.textContent = data.monthName;
         document.getElementById("hourlyTotalOrders").textContent = data.totalOrders.toLocaleString("es-AR");
         document.getElementById("hourlyTotalRevenue").textContent = "$" + data.totalRevenue.toLocaleString("es-AR");
@@ -1450,27 +1480,52 @@ document.addEventListener("DOMContentLoaded", () => {
         elRevenueGrowth.textContent = revenueGrowth > 0 ? `↑${revenueGrowth}% vs mes anterior` : revenueGrowth < 0 ? `↓${Math.abs(revenueGrowth)}% vs mes anterior` : "vs mes anterior";
         elRevenueGrowth.className = "hourly-summary-growth " + (revenueGrowth >= 0 ? "positive" : "negative");
 
-        const activeHours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1];
-        let html = "";
-
-        html += '<div class="hourly-night-label">Mediodía</div>';
-        for (let i = 0; i < 7; i++) {
-          const h = activeHours[i];
-          const d = data.hourlyData.find(x => x.hour === h) || { orders: 0, revenue: 0, label: h + ":00" };
-          html += renderHourlyRow(h, d);
-        }
-
-        html += '<div class="hourly-night-label">Noche</div>';
-        for (let i = 7; i < 14; i++) {
-          const h = activeHours[i];
-          const d = data.hourlyData.find(x => x.hour === h) || { orders: 0, revenue: 0, label: h === 0 ? "00:00" : (h === 1 ? "01:00" : h + ":00") };
-          html += renderHourlyRow(h, d);
-        }
-
-        hourlyGrid.innerHTML = html;
+        renderHourlyGrid(data);
       } catch (err) {
         hourlyGrid.innerHTML = '<div class="hourly-loading">Error: ' + escapeHtml(err?.message || err) + '</div>';
       }
+    }
+
+    function renderHourlyGrid(data) {
+      const hourlyGrid = document.getElementById("hourlyGrid");
+      if (!data || !hourlyGrid) return;
+
+      let hourlyData;
+      let dayLabel = "";
+      const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+      if (currentHourlyDay === "all") {
+        hourlyData = data.hourlyData;
+        hourlyDaySummary.style.display = "none";
+      } else {
+        const dayIdx = parseInt(currentHourlyDay);
+        hourlyData = data.hourlyByDay[dayIdx] || [];
+        const dayInfo = data.daySummary.find(d => d.dayIndex === dayIdx);
+        const avgOrders = dayInfo && dayInfo.orders > 0 ? (dayInfo.orders / 4.3).toFixed(1) : "0";
+        const avgRevenue = dayInfo && dayInfo.revenue > 0 ? "$" + Math.round(dayInfo.revenue / 4.3).toLocaleString("es-AR") : "$0";
+        dayLabel = dayNames[dayIdx];
+        hourlyDaySummaryText.innerHTML = `<strong>${dayInfo?.orders || 0}</strong> pedidos, <strong>${dayInfo?.revenue ? '$' + dayInfo.revenue.toLocaleString("es-AR") : '$0'}</strong> total &nbsp;|&nbsp; ~<strong>${avgOrders}</strong> ped/sem, ~<strong>${avgRevenue}</strong>/sem`;
+        hourlyDaySummary.style.display = "block";
+      }
+
+      const activeHours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1];
+      let html = "";
+
+      html += '<div class="hourly-night-label">Mediodía</div>';
+      for (let i = 0; i < 7; i++) {
+        const h = activeHours[i];
+        const d = hourlyData.find(x => x.hour === h) || { orders: 0, revenue: 0, label: h + ":00" };
+        html += renderHourlyRow(h, d);
+      }
+
+      html += '<div class="hourly-night-label">Noche</div>';
+      for (let i = 7; i < 14; i++) {
+        const h = activeHours[i];
+        const d = hourlyData.find(x => x.hour === h) || { orders: 0, revenue: 0, label: h === 0 ? "00:00" : (h === 1 ? "01:00" : h + ":00") };
+        html += renderHourlyRow(h, d);
+      }
+
+      hourlyGrid.innerHTML = html;
     }
 
     function renderHourlyRow(hour, data) {

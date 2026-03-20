@@ -62,20 +62,38 @@ export async function onRequestGet({ request, env }) {
       hourlyStats[hour] = { orders: 0, revenue: 0, label: `${label}:00` };
     }
 
+    // Stats por día de la semana: 0=domingo, 1=lunes, ..., 6=sábado
+    const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const dayStats = {};
+    const hourlyByDay = {}; // { dayIndex: { hour: { orders, revenue } } }
+    
+    for (let d = 0; d < 7; d++) {
+      dayStats[d] = { orders: 0, revenue: 0, name: dayNames[d] };
+      hourlyByDay[d] = {};
+      for (const hour of hourSlots) {
+        hourlyByDay[d][hour] = { orders: 0, revenue: 0 };
+      }
+    }
+
     const TIMEZONE_OFFSET = -3; // Servidor UTC, Argentina UTC-3
 
     for (const order of allOrders) {
       const serverDate = new Date(order.created);
-      // Convertir hora del servidor a hora local argentina restando el offset
       const localHour = serverDate.getHours() + TIMEZONE_OFFSET;
-      
-      // Normalizar hora (si es negativo, sumar 24 y ajustar al día anterior si es necesario)
       let adjustedHour = localHour;
       if (adjustedHour < 0) adjustedHour += 24;
       
+      const localDate = new Date(serverDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000);
+      const dayIndex = localDate.getDay();
+
       if (hourlyStats[adjustedHour] !== undefined) {
         hourlyStats[adjustedHour].orders += 1;
         hourlyStats[adjustedHour].revenue += getOrderTotal(order);
+        
+        dayStats[dayIndex].orders += 1;
+        dayStats[dayIndex].revenue += getOrderTotal(order);
+        hourlyByDay[dayIndex][adjustedHour].orders += 1;
+        hourlyByDay[dayIndex][adjustedHour].revenue += getOrderTotal(order);
       }
     }
 
@@ -86,6 +104,24 @@ export async function onRequestGet({ request, env }) {
       orders: hourlyStats[hour].orders,
       revenue: Math.round(hourlyStats[hour].revenue)
     }));
+
+    // Preparar datos por día
+    const daySummary = dayNames.map((name, idx) => ({
+      dayIndex: idx,
+      name,
+      orders: dayStats[idx].orders,
+      revenue: Math.round(dayStats[idx].revenue)
+    }));
+
+    const hourlyByDayResult = {};
+    for (const [dayIdx, hours] of Object.entries(hourlyByDay)) {
+      hourlyByDayResult[dayIdx] = hourSlots.map(hour => ({
+        hour,
+        label: hour === 0 ? "00" : String(hour).padStart(2, "0"),
+        orders: hours[hour].orders,
+        revenue: Math.round(hours[hour].revenue)
+      }));
+    }
 
     // Totales
     const totalOrders = result.reduce((sum, h) => sum + h.orders, 0);
@@ -123,6 +159,8 @@ export async function onRequestGet({ request, env }) {
         totalOrders,
         totalRevenue,
         hourlyData: result,
+        daySummary,
+        hourlyByDay: hourlyByDayResult,
         prevMonthOrders,
         prevMonthRevenue,
         ordersGrowth: prevMonthOrders > 0 ? Math.round(((totalOrders - prevMonthOrders) / prevMonthOrders) * 100) : 0,
