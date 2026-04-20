@@ -1256,8 +1256,12 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           "Retiro",
         ]);
 
+        const dailyRevenue = Number(data.revenue) || 0;
+        const dailyOrdersCount = Number(data.ordersCount) || 0;
+        const ordersFromDetail = data.orders_detail?.length || 0;
+
         const rows = [
-          ["Pedidos", finalOrdersCount || 0],
+          ["Pedidos", dailyOrdersCount || 0],
           ['<span class="list-indent">Delivery</span>', deliveryCount],
           ['<span class="list-indent">Retiro</span>', pickupCount]
         ];
@@ -1268,10 +1272,6 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           div.innerHTML = `<strong>${label}</strong><span class="subtitle">${val}</span>`;
           dayList.appendChild(div);
         });
-
-        const dailyRevenue = Number(data.revenue) || 0;
-        const dailyOrdersCount = Number(data.ordersCount) || 0;
-        const ordersFromDetail = data.orders_detail?.length || 0;
 
         let efectivoLocal = 0,
           transferenciaLocal = 0,
@@ -1332,11 +1332,12 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         renderTopItemsRow(lastItemsCount, 20);
         renderOrdersList(data.orders_detail);
 
-        if (typeof finalOrdersCount === "number") {
+        const displayOrdersCount = dailyOrdersCount || ordersFromDetail;
+        if (typeof displayOrdersCount === "number") {
           if (lastOrdersCount === null) {
-            lastOrdersCount = finalOrdersCount;
-          } else if (finalOrdersCount > lastOrdersCount) {
-            lastOrdersCount = finalOrdersCount;
+            lastOrdersCount = displayOrdersCount;
+          } else if (displayOrdersCount > lastOrdersCount) {
+            lastOrdersCount = displayOrdersCount;
             const newest = Array.isArray(data.orders_detail) ? data.orders_detail[0] || null : null;
             const text = buildOrderNotifyText(newest || {});
             fetch("/api/notify-telegram", {
