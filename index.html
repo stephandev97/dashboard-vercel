@@ -61,7 +61,7 @@
             <line x1="8" y1="14" x2="16" y2="14"></line>
           </svg>
         </button>
-        <a href="ingresos-gastos.html" title="Ingresos y gastos" class="icon-btn" aria-label="Ingresos y gastos" style="display:none">
+<a href="ingresos-gastos.html" title="Ingresos y gastos" class="icon-btn" aria-label="Ingresos y gastos" style="display:none">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 7h18"></path>
@@ -71,6 +71,15 @@
             <path d="M9 19h6"></path>
           </svg>
         </a>
+        <button id="autoRefreshBtn" title="Sincronización automática (ON)" class="icon-btn active" aria-label="Sincronización automática">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+            <path d="M16 16h5v5"></path>
+          </svg>
+        </button>
       </div>
       <input type="date" id="day" style="display:none" />
     </div>
@@ -766,13 +775,52 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       });
     }
 
+    let autoRefreshEnabled = true;
+    let autoRefreshInterval = null;
+
+    function toggleAutoRefresh() {
+      autoRefreshEnabled = !autoRefreshEnabled;
+      const btn = document.getElementById("autoRefreshBtn");
+      if (btn) {
+        btn.classList.toggle("active", autoRefreshEnabled);
+        btn.title = autoRefreshEnabled ? "Sincronización automática (ON)" : "Sincronización automática (OFF)";
+      }
+      if (autoRefreshEnabled && !autoRefreshInterval) {
+        autoRefreshInterval = setInterval(() => {
+          loadData();
+        }, 20000);
+      } else if (!autoRefreshEnabled && autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+      }
+    }
+
+    function setAutoRefreshState(enabled) {
+      autoRefreshEnabled = enabled;
+      const btn = document.getElementById("autoRefreshBtn");
+      if (btn) {
+        btn.classList.toggle("active", autoRefreshEnabled);
+        btn.title = autoRefreshEnabled ? "Sincronización automática (ON)" : "Sincronización automática (OFF)";
+      }
+      if (autoRefreshEnabled && !autoRefreshInterval) {
+        autoRefreshInterval = setInterval(() => {
+          loadData();
+        }, 20000);
+      } else if (!autoRefreshEnabled && autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("day").value = getLocalDateString(businessToday());
       updateDayLabel();
       loadData();
-      setInterval(() => {
-        loadData();
-      }, 20000);
+      setAutoRefreshState(true);
+      const autoRefreshBtn = document.getElementById("autoRefreshBtn");
+      if (autoRefreshBtn) {
+        autoRefreshBtn.addEventListener("click", toggleAutoRefresh);
+      }
     });
 
     const scrollTopBtn = document.getElementById("scrollTopBtn");
@@ -1209,7 +1257,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         ]);
 
         const rows = [
-          ["Pedidos", data.ordersCount || 0],
+          ["Pedidos", finalOrdersCount || 0],
           ['<span class="list-indent">Delivery</span>', deliveryCount],
           ['<span class="list-indent">Retiro</span>', pickupCount]
         ];
@@ -1221,10 +1269,14 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           dayList.appendChild(div);
         });
 
-        // ✅ Totales por método (incluye mixtos) calculados desde orders_detail
+        const dailyRevenue = Number(data.revenue) || 0;
+        const dailyOrdersCount = Number(data.ordersCount) || 0;
+        const ordersFromDetail = data.orders_detail?.length || 0;
+
         let efectivoLocal = 0,
           transferenciaLocal = 0,
           debitoLocal = 0;
+        let revenueFromDetail = 0;
         for (const order of data.orders_detail || []) {
           const total = getOrderTotal(order);
           const parsed = parsePagoDetalle(order.pagoDetalle || order.detallePago || "");
@@ -1241,14 +1293,26 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           transferenciaLocal += mp;
           debitoLocal += deb;
           cambioTotal += cambio;
+          if (Number.isFinite(total)) revenueFromDetail += total;
+        }
+
+        let finalRevenue = dailyRevenue;
+        let finalOrdersCount = dailyOrdersCount;
+        if (ordersFromDetail > 0) {
+          if (Math.abs(revenueFromDetail - dailyRevenue) > 100 || ordersFromDetail !== dailyOrdersCount) {
+            finalRevenue = revenueFromDetail;
+            finalOrdersCount = ordersFromDetail;
+          }
+        } else {
+          finalRevenue = revenueFromDetail;
+          finalOrdersCount = 0;
         }
 
         wEfectivo.textContent = `$${efectivoLocal.toLocaleString("es-AR")}`;
         wTransfer.textContent = `$${transferenciaLocal.toLocaleString("es-AR")}`;
         wDebito.textContent = `$${debitoLocal.toLocaleString("es-AR")}`;
         if (wTotal) {
-          const totalWidgets = efectivoLocal + transferenciaLocal + debitoLocal;
-          wTotal.textContent = `$${totalWidgets.toLocaleString("es-AR")}`;
+          wTotal.textContent = `$${finalRevenue.toLocaleString("es-AR")}`;
         }
         if (mTransferDelivery) {
           mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
@@ -1268,11 +1332,11 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         renderTopItemsRow(lastItemsCount, 20);
         renderOrdersList(data.orders_detail);
 
-        if (typeof data.ordersCount === "number") {
+        if (typeof finalOrdersCount === "number") {
           if (lastOrdersCount === null) {
-            lastOrdersCount = data.ordersCount;
-          } else if (data.ordersCount > lastOrdersCount) {
-            lastOrdersCount = data.ordersCount;
+            lastOrdersCount = finalOrdersCount;
+          } else if (finalOrdersCount > lastOrdersCount) {
+            lastOrdersCount = finalOrdersCount;
             const newest = Array.isArray(data.orders_detail) ? data.orders_detail[0] || null : null;
             const text = buildOrderNotifyText(newest || {});
             fetch("/api/notify-telegram", {
