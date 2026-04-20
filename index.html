@@ -1258,7 +1258,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
 
         const dailyRevenue = Number(data.revenue) || 0;
         const dailyOrdersCount = Number(data.ordersCount) || 0;
-        const ordersFromDetail = data.orders_detail?.length || 0;
+        const paidByMethod = data.paidByMethod || {};
 
         const rows = [
           ["Pedidos", dailyOrdersCount || 0],
@@ -1273,46 +1273,15 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           dayList.appendChild(div);
         });
 
-        let efectivoLocal = 0,
-          transferenciaLocal = 0,
-          debitoLocal = 0;
-        let revenueFromDetail = 0;
-        for (const order of data.orders_detail || []) {
-          const total = getOrderTotal(order);
-          const parsed = parsePagoDetalle(order.pagoDetalle || order.detallePago || "");
-          const mp =
-            Number(order.pagoMp ?? order.transferencia ?? order.mp ?? parsed.mp ?? 0) || 0;
-          const deb =
-            Number(order.pagoDebito ?? order.debito ?? 0) || 0;
-          const ef =
-            Number(order.pagoEfectivo ?? order.efectivo ?? parsed.ef ?? 0) || 0;
-          const restante = Number.isFinite(total) ? Math.max(0, total - mp - deb) : ef;
-          const appliedCash = Math.min(ef, restante);
-          const cambio = Math.max(0, ef - appliedCash);
-          efectivoLocal += appliedCash;
-          transferenciaLocal += mp;
-          debitoLocal += deb;
-          cambioTotal += cambio;
-          if (Number.isFinite(total)) revenueFromDetail += total;
-        }
-
-        let finalRevenue = dailyRevenue;
-        let finalOrdersCount = dailyOrdersCount;
-        if (ordersFromDetail > 0) {
-          if (Math.abs(revenueFromDetail - dailyRevenue) > 100 || ordersFromDetail !== dailyOrdersCount) {
-            finalRevenue = revenueFromDetail;
-            finalOrdersCount = ordersFromDetail;
-          }
-        } else {
-          finalRevenue = revenueFromDetail;
-          finalOrdersCount = 0;
-        }
+        const efectivoLocal = Number(paidByMethod.efectivo || paidByMethod.ef || 0);
+        const transferenciaLocal = Number(paidByMethod.transferencia || paidByMethod.mp || 0);
+        const debitoLocal = Number(paidByMethod.debito || paidByMethod.deb || 0);
 
         wEfectivo.textContent = `$${efectivoLocal.toLocaleString("es-AR")}`;
         wTransfer.textContent = `$${transferenciaLocal.toLocaleString("es-AR")}`;
         wDebito.textContent = `$${debitoLocal.toLocaleString("es-AR")}`;
         if (wTotal) {
-          wTotal.textContent = `$${finalRevenue.toLocaleString("es-AR")}`;
+          wTotal.textContent = `$${dailyRevenue.toLocaleString("es-AR")}`;
         }
         if (mTransferDelivery) {
           mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
@@ -1332,7 +1301,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         renderTopItemsRow(lastItemsCount, 20);
         renderOrdersList(data.orders_detail);
 
-        const displayOrdersCount = dailyOrdersCount || ordersFromDetail;
+        const displayOrdersCount = dailyOrdersCount || data.orders_detail?.length || 0;
         if (typeof displayOrdersCount === "number") {
           if (lastOrdersCount === null) {
             lastOrdersCount = displayOrdersCount;
