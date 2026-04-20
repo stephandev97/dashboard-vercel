@@ -1273,15 +1273,18 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           dayList.appendChild(div);
         });
 
-        const efectivoLocal = Number(paidByMethod.efectivo || paidByMethod.ef || 0);
-        const transferenciaLocal = Number(paidByMethod.transferencia || paidByMethod.mp || 0);
-        const debitoLocal = Number(paidByMethod.debito || paidByMethod.deb || 0);
+        const revenueByMethod = data.revenueByMethod || {};
+        const efectivoLocal = Number(revenueByMethod.efectivo || revenueByMethod.ef || 0);
+        const transferenciaLocal = Number(revenueByMethod.transferencia || revenueByMethod.mp || 0);
+        const debitoLocal = Number(revenueByMethod.debito || revenueByMethod.deb || 0);
 
         wEfectivo.textContent = `$${efectivoLocal.toLocaleString("es-AR")}`;
         wTransfer.textContent = `$${transferenciaLocal.toLocaleString("es-AR")}`;
         wDebito.textContent = `$${debitoLocal.toLocaleString("es-AR")}`;
+        const methodSum = efectivoLocal + transferenciaLocal + debitoLocal;
+        const finalRevenue = (methodSum > 0 && Math.abs(methodSum - dailyRevenue) > 100) ? methodSum : dailyRevenue;
         if (wTotal) {
-          wTotal.textContent = `$${dailyRevenue.toLocaleString("es-AR")}`;
+          wTotal.textContent = `$${finalRevenue.toLocaleString("es-AR")}`;
         }
         if (mTransferDelivery) {
           mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
