@@ -187,7 +187,12 @@ export async function onRequestGet({ request, env }) {
         ordersGrowth: prevMonthOrders > 0 ? Math.round(((totalOrders - prevMonthOrders) / prevMonthOrders) * 100) : 0,
         revenueGrowth: prevMonthRevenue > 0 ? Math.round(((totalRevenue - prevMonthRevenue) / prevMonthRevenue) * 100) : 0,
       }),
-      { headers: { "content-type": "application/json; charset=utf-8" } }
+      {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+        },
+      }
     );
   } catch (e) {
     return new Response(
@@ -195,7 +200,12 @@ export async function onRequestGet({ request, env }) {
         error: true,
         details: e?.message ?? String(e),
       }),
-      { headers: { "content-type": "application/json; charset=utf-8" } }
+      {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+        },
+      }
     );
   }
 }

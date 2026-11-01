@@ -871,6 +871,13 @@ details[open] summary .chev {
   color: var(--pixel-text-soft);
 }
 
+.order-details {
+  margin-left: 1rem;
+  margin-top: .12rem;
+  font-size: .75rem;
+  color: var(--pixel-text-soft);
+}
+
 @media (max-width: 480px) {
   .order-products-list .qty {
     min-width: 1.9rem;
@@ -884,6 +891,11 @@ details[open] summary .chev {
   }
 
   .order-flavors {
+    margin-left: .9rem;
+    font-size: .72rem;
+  }
+
+  .order-details {
     margin-left: .9rem;
     font-size: .72rem;
   }
@@ -1641,5 +1653,419 @@ details[open] .accordion-summary .chev {
   .hourly-day-tab {
     padding: 0.3rem 0.4rem;
     font-size: 0.65rem;
+  }
+}
+
+
+/* =================== CAFETERIA MODAL =================== */
+.cafe-modal {
+  max-width: 620px;
+  width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cafe-modal .modal-body {
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.cafe-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cafe-icon {
+  font-size: 1.25rem;
+}
+
+.cafe-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--pixel-border-soft);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+}
+
+.cafe-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--pixel-text-soft);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all .15s ease;
+}
+
+.cafe-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--pixel-text);
+}
+
+.cafe-tab-btn.active {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  font-weight: 600;
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.cafe-tab-content {
+  display: none;
+}
+
+.cafe-tab-content.active {
+  display: block;
+}
+
+.cafe-section-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--pixel-text-soft);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.cafe-presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cafe-preset-btn {
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: 1px solid var(--pixel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--pixel-text-soft);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.cafe-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--pixel-text);
+}
+
+.cafe-preset-btn.active {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
+  color: #fef08a;
+  font-weight: 600;
+}
+
+.cafe-select {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--pixel-border);
+  color: var(--pixel-text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  width: 100%;
+  outline: none;
+}
+
+.cafe-select:focus {
+  border-color: var(--pixel-focus, #eab308);
+}
+
+.cafe-checkboxes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 10px 0 14px;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--pixel-border-soft);
+}
+
+.cafe-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--pixel-text-soft);
+  user-select: none;
+}
+
+.cafe-checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #eab308;
+  width: 16px;
+  height: 16px;
+}
+
+.cafe-quick-margins {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.cafe-badge-btn {
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  border: 1px solid var(--pixel-border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--pixel-text-soft);
+  cursor: pointer;
+}
+
+.cafe-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cafe-badge-btn.active {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
+  color: #fef08a;
+  font-weight: 600;
+}
+
+.cafe-hint {
+  font-size: 0.72rem;
+  color: #777;
+  margin-top: 4px;
+  display: block;
+}
+
+.input-wrapper .suffix {
+  position: absolute;
+  right: 0.8rem;
+  color: #888;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* Results Card */
+.cafe-results-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--pixel-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 14px 0 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.cafe-result-top {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  gap: 8px;
+  text-align: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cafe-stat-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cafe-stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--pixel-text-soft);
+  letter-spacing: 0.5px;
+}
+
+.cafe-stat-num {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--pixel-text);
+  margin: 2px 0;
+}
+
+.cafe-stat-block.main .cafe-stat-num {
+  font-size: 1.55rem;
+  color: #eab308;
+}
+
+.cafe-stat-num.positive {
+  color: #22c55e;
+}
+
+.cafe-round-btn {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #fef08a;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.cafe-round-btn:hover {
+  background: rgba(234, 179, 8, 0.3);
+}
+
+.cafe-margin-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.cafe-breakdown-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  font-size: 0.75rem;
+  border-top: 1px solid var(--pixel-border-soft);
+  padding-top: 8px;
+}
+
+.cafe-tag {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--pixel-text-soft);
+  border: 1px solid var(--pixel-border-soft);
+}
+
+/* Manual Simulator */
+.cafe-manual-simulator {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--pixel-border-soft);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+.cafe-manual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.cafe-manual-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pixel-text-soft);
+}
+
+.cafe-manual-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cafe-manual-input {
+  max-width: 140px;
+}
+
+.cafe-manual-stats {
+  font-size: 0.82rem;
+  color: var(--pixel-text);
+  display: flex;
+  gap: 12px;
+}
+
+.cafe-manual-stats strong {
+  color: #22c55e;
+}
+
+/* Inputs Tab */
+.cafe-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cafe-inputs-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--pixel-border-soft);
+}
+
+.cafe-secondary-btn {
+  background-color: #475569 !important;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+}
+
+.cafe-secondary-btn:hover {
+  background-color: #64748b !important;
+}
+
+.cafe-save-indicator {
+  font-size: 0.78rem;
+  color: #22c55e;
+}
+
+/* Menu Table Tab */
+.cafe-table-wrapper {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--pixel-border);
+  border-radius: 8px;
+  margin: 8px 0 12px;
+}
+
+.cafe-menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.cafe-menu-table th, .cafe-menu-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--pixel-border-soft);
+}
+
+.cafe-menu-table th {
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--pixel-text-soft);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.cafe-menu-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cafe-menu-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cafe-copy-feedback {
+  font-size: 0.8rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .cafe-result-top {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .cafe-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+  .cafe-recipe-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cafe-manual-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

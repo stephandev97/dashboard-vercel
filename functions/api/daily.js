@@ -57,7 +57,12 @@ export async function onRequestGet({ request, env }) {
         deliveryByAddress: safe(dailyRecord.deliveryByAddress),
         orders_detail,
       }),
-      { headers: { "content-type": "application/json; charset=utf-8" } }
+      {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+        },
+      }
     );
   } catch (e) {
     const fallback = {
@@ -75,7 +80,10 @@ export async function onRequestGet({ request, env }) {
       details: e?.message ?? String(e),
     };
     return new Response(JSON.stringify(fallback), {
-      headers: { "content-type": "application/json; charset=utf-8" },
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "access-control-allow-origin": "*",
+      },
     });
   }
 }

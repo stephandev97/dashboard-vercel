@@ -4,6 +4,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script>
+    // Desactivar recarga automatica de Live Server / WebSocket
+    if (typeof window !== "undefined" && window.WebSocket) {
+      const _WS = window.WebSocket;
+      window.WebSocket = function (url, protocols) {
+        if (typeof url === "string" && (url.includes("/ws") || url.includes("live-server"))) {
+          console.log("Recarga automática de página desactivada.");
+          return {
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            send: () => {},
+            close: () => {},
+            readyState: 3,
+          };
+        }
+        return new _WS(url, protocols);
+      };
+    }
+  </script>
   <title>Dashboard Daily Stats</title>
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
@@ -35,9 +54,25 @@
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
         </button>
+        <button id="deliveryStatsBtn" title="Repartidores" class="icon-btn" aria-label="Repartidores">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5.5" cy="17.5" r="3.5"></circle>
+            <circle cx="18.5" cy="17.5" r="3.5"></circle>
+            <path d="M15 6h-3l-3 6 3.5 5.5M5.5 17.5 9 12h8l1.5 5.5M15 6h2l1 3"></path>
+          </svg>
+        </button>
         <button id="prevDay" title="Día anterior" class="icon-btn" aria-label="Día anterior">‹</button>
         <button id="nextDay" title="Día siguiente" class="icon-btn" aria-label="Día siguiente">›</button>
         <button id="goToday" title="Ir a hoy" class="icon-btn" aria-label="Ir a hoy">↻</button>
+        <button id="cafeCalcBtn" title="Costos de Cafetería" class="icon-btn" aria-label="Costos de Cafetería">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+            <line x1="6" y1="1" x2="6" y2="4"></line>
+            <line x1="10" y1="1" x2="10" y2="4"></line>
+            <line x1="14" y1="1" x2="14" y2="4"></line>
+          </svg>
+        </button>
         <button id="calcBtn" title="Calculadora" class="icon-btn" aria-label="Calculadora">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -71,7 +106,7 @@
             <path d="M9 19h6"></path>
           </svg>
         </a>
-        <button id="autoRefreshBtn" title="Sincronización automática (ON)" class="icon-btn active" aria-label="Sincronización automática">
+        <button id="autoRefreshBtn" title="Sincronización automática (OFF)" class="icon-btn" aria-label="Sincronización automática" style="display:none">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -85,6 +120,23 @@
     </div>
 
     <div id="error"></div>
+
+    <div id="deliveryModalOverlay" class="modal-overlay" aria-hidden="true">
+      <div class="modal month-modal">
+        <div class="modal-header">
+          <h4 class="modal-title">Repartidores</h4>
+          <button id="deliveryModalClose" title="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="month-header">
+            <button id="deliveryPrevMonth" class="icon-btn" aria-label="Mes anterior">‹</button>
+            <span id="deliveryMonthLabel" class="month-name"></span>
+            <button id="deliveryNextMonth" class="icon-btn" aria-label="Mes siguiente">›</button>
+          </div>
+          <div id="deliveryStatsBody"></div>
+        </div>
+      </div>
+    </div>
 
     <div id="monthModalOverlay" class="modal-overlay" aria-hidden="true">
       <div class="modal month-modal">
@@ -303,6 +355,242 @@
         </div>
       </div>
 
+      
+      <!-- Modal Costos y Precios de Cafetería -->
+      <div id="cafeModalOverlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal cafe-modal">
+          <div class="modal-header">
+            <div class="cafe-header-title">
+              <span class="cafe-icon">☕</span>
+              <h4 class="modal-title">Costos y Precios de Cafetería</h4>
+            </div>
+            <button id="cafeModalClose" title="Cerrar">✕</button>
+          </div>
+
+          <!-- Tabs de Navegación -->
+          <div class="cafe-tabs">
+            <button type="button" class="cafe-tab-btn active" data-tab="calc">Calculadora</button>
+            <button type="button" class="cafe-tab-btn" data-tab="inputs">Insumos Base</button>
+            <button type="button" class="cafe-tab-btn" data-tab="menu">Carta & Márgenes</button>
+          </div>
+
+          <div class="modal-body cafe-modal-body">
+            <!-- TAB 1: CALCULADORA -->
+            <div id="cafeTabContentCalc" class="cafe-tab-content active">
+              <div class="cafe-section-label">Bebida / Receta</div>
+              <div class="cafe-presets-row" id="cafePresetsRow">
+                <button type="button" class="cafe-preset-btn active" data-preset="espresso">Espresso (9g)</button>
+                <button type="button" class="cafe-preset-btn" data-preset="doble">Doble (18g)</button>
+                <button type="button" class="cafe-preset-btn" data-preset="cortado">Cortado (60ml)</button>
+                <button type="button" class="cafe-preset-btn" data-preset="flat">Flat White (150ml)</button>
+                <button type="button" class="cafe-preset-btn" data-preset="latte">Latte (180ml)</button>
+                <button type="button" class="cafe-preset-btn" data-preset="custom">Personalizado</button>
+              </div>
+
+              <div class="calc-row cafe-recipe-row">
+                <div class="input-group">
+                  <label for="cafeCoffeeGrams">Café en grano (g)</label>
+                  <input type="number" id="cafeCoffeeGrams" value="9" min="0" step="0.5" />
+                </div>
+                <div class="input-group">
+                  <label for="cafeMilkMl">Leche (ml)</label>
+                  <input type="number" id="cafeMilkMl" value="0" min="0" step="5" />
+                </div>
+                <div class="input-group">
+                  <label for="cafeMilkType">Tipo de Leche</label>
+                  <select id="cafeMilkType" class="cafe-select">
+                    <option value="none">Sin leche</option>
+                    <option value="regular" selected>Tradicional</option>
+                    <option value="plant">Vegetal / Especial</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="cafe-checkboxes-row">
+                <label class="cafe-checkbox-label">
+                  <input type="checkbox" id="cafeTakeAway" />
+                  <span>🛵 Para Llevar (suma vaso y tapa)</span>
+                </label>
+                <label class="cafe-checkbox-label">
+                  <input type="checkbox" id="cafeExtras" checked />
+                  <span>Extras (azúcar / edulc. / servilleta)</span>
+                </label>
+              </div>
+
+              <div class="calc-row cafe-financial-row">
+                <div class="input-group">
+                  <label for="cafeTargetMargin">Margen deseado (%)</label>
+                  <div class="input-wrapper">
+                    <input type="number" id="cafeTargetMargin" value="65" min="1" max="95" step="1" />
+                    <span class="suffix">%</span>
+                  </div>
+                  <div class="cafe-quick-margins" id="cafeQuickMargins">
+                    <button type="button" class="cafe-badge-btn" data-margin="50">50%</button>
+                    <button type="button" class="cafe-badge-btn" data-margin="60">60%</button>
+                    <button type="button" class="cafe-badge-btn active" data-margin="65">65%</button>
+                    <button type="button" class="cafe-badge-btn" data-margin="70">70%</button>
+                    <button type="button" class="cafe-badge-btn" data-margin="75">75%</button>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="cafePaymentFee">Comisión cobro (%)</label>
+                  <div class="input-wrapper">
+                    <input type="number" id="cafePaymentFee" value="3" min="0" max="30" step="0.5" />
+                    <span class="suffix">%</span>
+                  </div>
+                  <span class="cafe-hint">Tarjetas / Mercado Pago</span>
+                </div>
+              </div>
+
+              <!-- Tarjeta de Resultados Destacados -->
+              <div class="cafe-results-card">
+                <div class="cafe-result-top">
+                  <div class="cafe-stat-block">
+                    <div class="cafe-stat-label">Costo Insumos</div>
+                    <div id="cafeTotalCost" class="cafe-stat-num">$0</div>
+                  </div>
+                  <div class="cafe-stat-block main">
+                    <div class="cafe-stat-label">Precio Sugerido</div>
+                    <div id="cafeSuggestedPrice" class="cafe-stat-num highlight">$0</div>
+                    <button type="button" id="cafeRoundPriceBtn" class="cafe-round-btn" title="Redondear al múltiplo más cercano">Redondear</button>
+                  </div>
+                  <div class="cafe-stat-block">
+                    <div class="cafe-stat-label">Ganancia Neta</div>
+                    <div id="cafeNetProfit" class="cafe-stat-num positive">$0</div>
+                    <span id="cafeActualMargin" class="cafe-margin-tag">0% neto</span>
+                  </div>
+                </div>
+
+                <!-- Desglose de costos -->
+                <div class="cafe-breakdown-tags" id="cafeBreakdownTags">
+                  <span class="cafe-tag" id="tagCostCoffee">Café: $0</span>
+                  <span class="cafe-tag" id="tagCostMilk">Leche: $0</span>
+                  <span class="cafe-tag" id="tagCostPackaging">Packaging: $0</span>
+                  <span class="cafe-tag" id="tagCostExtras">Extras: $0</span>
+                </div>
+              </div>
+
+              <!-- Simulador de Precio Manual -->
+              <div class="cafe-manual-simulator">
+                <div class="cafe-manual-header">
+                  <span class="cafe-manual-title">Simulador con Precio Real</span>
+                  <span class="cafe-hint">Probá con tu precio de carta</span>
+                </div>
+                <div class="cafe-manual-row">
+                  <div class="input-wrapper cafe-manual-input">
+                    <span class="prefix">$</span>
+                    <input type="number" id="cafeManualPrice" placeholder="Ej: 2500" step="50" />
+                  </div>
+                  <div class="cafe-manual-stats" id="cafeManualStats">
+                    <span>Ingresá un precio para ver ganancia y margen</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: INSUMOS BASE -->
+            <div id="cafeTabContentInputs" class="cafe-tab-content">
+              <div class="cafe-section-label">Precios de Insumos (guardado automático)</div>
+              <div class="cafe-inputs-grid">
+                <div class="input-group">
+                  <label for="baseCoffeeKg">Café en grano ($/kg)</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input type="number" id="baseCoffeeKg" value="28000" step="500" />
+                  </div>
+                  <span class="cafe-hint" id="hintCoffeePerGram">$28.00 / g</span>
+                </div>
+
+                <div class="input-group">
+                  <label for="baseMilkLiter">Leche común ($/litro)</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input type="number" id="baseMilkLiter" value="1400" step="50" />
+                  </div>
+                  <span class="cafe-hint" id="hintMilkPerMl">$1.40 / ml</span>
+                </div>
+
+                <div class="input-group">
+                  <label for="basePlantMilkLiter">Leche vegetal ($/litro)</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input type="number" id="basePlantMilkLiter" value="3200" step="100" />
+                  </div>
+                  <span class="cafe-hint" id="hintPlantMilkPerMl">$3.20 / ml</span>
+                </div>
+
+                <div class="input-group">
+                  <label for="basePackaging">Combo Vaso + Tapa ($/u)</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input type="number" id="basePackaging" value="250" step="10" />
+                  </div>
+                  <span class="cafe-hint">Vaso takeaway + tapa</span>
+                </div>
+
+                <div class="input-group">
+                  <label for="baseExtras">Extras por taza ($/u)</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input type="number" id="baseExtras" value="60" step="5" />
+                  </div>
+                  <span class="cafe-hint">Azúcar, edulc., servilleta</span>
+                </div>
+
+                <div class="input-group">
+                  <label for="basePlantMilkFund">Fondo Leche Veg. ($/taza)</label>
+                  <div class="input-wrapper">
+                    <span class="prefix">$</span>
+                    <input type="number" id="basePlantMilkFund" value="50" step="5" />
+                  </div>
+                  <span class="cafe-hint">Prorrateo vegetal libre</span>
+                </div>
+
+                <div class="input-group">
+                  <label for="baseFee">Comisión promedio (%)</label>
+                  <div class="input-wrapper">
+                    <input type="number" id="baseFee" value="3" step="0.5" />
+                    <span class="suffix">%</span>
+                  </div>
+                  <span class="cafe-hint">MP / Débito / Tarjetas</span>
+                </div>
+              </div>
+
+              <div class="cafe-inputs-actions">
+                <button type="button" id="cafeResetDefaultsBtn" class="action-btn cafe-secondary-btn">Restablecer sugeridos</button>
+                <span class="cafe-save-indicator" id="cafeSaveIndicator">✓ Configuración guardada en el navegador</span>
+              </div>
+            </div>
+
+            <!-- TAB 3: CARTA & MÁRGENES -->
+            <div id="cafeTabContentMenu" class="cafe-tab-content">
+              <div class="cafe-section-label">Carta Completa con Margen Actual (<span id="cafeMenuMarginLabel">65%</span>)</div>
+              <div class="cafe-table-wrapper">
+                <table class="cafe-menu-table">
+                  <thead>
+                    <tr>
+                      <th>Bebida</th>
+                      <th>Costo Salón</th>
+                      <th>Costo Llevar</th>
+                      <th>Sug. Salón</th>
+                      <th>Sug. Llevar</th>
+                      <th>Ganancia</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cafeMenuTableBody">
+                    <!-- Filas generadas dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="cafe-menu-actions">
+                <button type="button" id="cafeCopyMenuBtn" class="action-btn">📋 Copiar Resumen de Carta</button>
+                <span id="cafeCopyFeedback" class="cafe-copy-feedback"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal Arqueo Billetes -->
       <div id="cashModalOverlay" class="modal-overlay" aria-hidden="true">
         <div class="modal">
@@ -374,12 +662,16 @@
 
 
   <script>
+    const PB_URL = "https://railway-production-857d.up.railway.app";
+    const API_BASE = (location.hostname === "127.0.0.1" || location.hostname === "localhost")
+      ? "https://dashboard-vercel.pages.dev"
+      : "";
+
     const elErr = document.getElementById("error");
     const dayList = document.getElementById("dayList");
     const topItemsRow = document.getElementById("topItemsRow");
     const productsAccordion = document.getElementById("productsAccordion");
     let lastItemsCount = {};
-    let lastOrdersCount = null;
 
     const wEfectivo = document.getElementById("wEfectivo");
     const wTransfer = document.getElementById("wTransfer");
@@ -393,7 +685,6 @@
     const transferModalClose = document.getElementById("transferModalClose");
     const mTransferDelivery = document.getElementById("mTransferDelivery");
     const mTransferRetiro = document.getElementById("mTransferRetiro");
-    const testNotifyBtn = document.getElementById("testNotify");
     const transferWidget = document.getElementById("wTransfer");
     if (transferWidget && transferModalOverlay) {
       transferWidget.closest(".widget")?.addEventListener("click", () => {
@@ -417,22 +708,6 @@
         }
       });
     }
-    if (testNotifyBtn) {
-      testNotifyBtn.addEventListener("click", async () => {
-        try {
-          const r = await fetch("/api/notify-telegram", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ text: "Prueba de notificación desde dashboard" }),
-          });
-          const j = await r.json().catch(() => ({}));
-          elErr.textContent = j?.ok ? "Notificación enviada" : "Error al enviar notificación";
-        } catch {
-          elErr.textContent = "Error al enviar notificación";
-        }
-      });
-    }
-
     /* ======= CALCULATOR LOGIC ======= */
     const calcBtn = document.getElementById("calcBtn");
     const calcModalOverlay = document.getElementById("calcModalOverlay");
@@ -666,6 +941,139 @@
 if (cashBtn) cashBtn.addEventListener("click", openCash);
     if (cashModalClose) cashModalClose.addEventListener("click", closeCash);
 
+    /* ======= REPARTIDORES MODAL ======= */
+    const deliveryStatsBtn = document.getElementById("deliveryStatsBtn");
+    const deliveryModalOverlay = document.getElementById("deliveryModalOverlay");
+    const deliveryModalClose = document.getElementById("deliveryModalClose");
+    const deliveryStatsBody = document.getElementById("deliveryStatsBody");
+    const deliveryMonthLabel = document.getElementById("deliveryMonthLabel");
+    let deliveryMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    // Cache por mes para no volver a descargar al reabrir el modal o navegar entre meses
+    const deliveryCache = new Map();
+    const DELIVERY_CACHE_MS = 5 * 60 * 1000;
+
+    const escHtml = (s) =>
+      String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const money = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("es-AR");
+    const pbDate = (d) => d.toISOString().replace("T", " ").slice(0, 19);
+
+    // Usa deliveryCost; en pedidos viejos lo extrae del texto "Envío: $1.200" de pagoDetalle
+    function getShippingCost(order) {
+      const direct = Number(order.deliveryCost);
+      if (Number.isFinite(direct) && direct > 0) return direct;
+      const m = String(order.pagoDetalle || "").match(/Env[ií]o:\s*\$\s*([\d.,]+)/i);
+      if (!m) return 0;
+      const value = Number(m[1].replace(/\./g, "").replace(",", "."));
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    async function loadDeliveryStats() {
+      if (!deliveryStatsBody) return;
+      const start = new Date(deliveryMonth.getFullYear(), deliveryMonth.getMonth(), 1);
+      const end = new Date(deliveryMonth.getFullYear(), deliveryMonth.getMonth() + 1, 1);
+      deliveryMonthLabel.textContent = start.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+      deliveryStatsBody.innerHTML = '<p style="opacity:.7">Cargando…</p>';
+
+      const filter = encodeURIComponent(
+        `deliveryId != "" && progress = "delivered" && entregado >= "${pbDate(start)}" && entregado < "${pbDate(end)}"`
+      );
+      const fields = encodeURIComponent("id,deliveryId,deliveryCost,pagoDetalle,entregado,expand.deliveryId.name,expand.deliveryId.username,expand.deliveryId.email");
+      const cacheKey = `${start.getFullYear()}-${start.getMonth()}`;
+      const cached = deliveryCache.get(cacheKey);
+      const orders = [];
+      if (cached && Date.now() - cached.at < DELIVERY_CACHE_MS) {
+        orders.push(...cached.orders);
+      } else {
+        try {
+          for (let page = 1; page <= 20; page++) {
+            const res = await fetch(`${PB_URL}/api/collections/orders/records?filter=${filter}&expand=deliveryId&fields=${fields}&sort=entregado&perPage=500&page=${page}&skipTotal=1`);
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const json = await res.json();
+            orders.push(...(json.items || []));
+            if ((json.items || []).length < 500) break;
+          }
+          deliveryCache.set(cacheKey, { at: Date.now(), orders: [...orders] });
+        } catch (err) {
+          console.warn("Error cargando repartidores:", err);
+          deliveryStatsBody.innerHTML = '<p style="color:#f87171">No se pudieron cargar los datos.</p>';
+          return;
+        }
+      }
+
+      const couriers = new Map();
+      for (const order of orders) {
+        const user = order.expand?.deliveryId;
+        const label = user?.name || user?.username || user?.email || "Repartidor " + String(order.deliveryId).slice(-4);
+        const entry = couriers.get(order.deliveryId) || { label, count: 0, total: 0, days: new Map() };
+        const cost = getShippingCost(order);
+        const day = new Date(order.entregado.replace(" ", "T")).toLocaleDateString("sv-SE");
+        const dayEntry = entry.days.get(day) || { count: 0, total: 0 };
+        dayEntry.count += 1;
+        dayEntry.total += cost;
+        entry.days.set(day, dayEntry);
+        entry.count += 1;
+        entry.total += cost;
+        couriers.set(order.deliveryId, entry);
+      }
+
+      if (!couriers.size) {
+        deliveryStatsBody.innerHTML = '<p style="opacity:.7">Sin entregas en este mes.</p>';
+        return;
+      }
+
+      const list = [...couriers.values()].sort((a, b) => b.total - a.total);
+      const grandCount = list.reduce((s, c) => s + c.count, 0);
+      const grandTotal = list.reduce((s, c) => s + c.total, 0);
+      const cell = "padding:6px 4px;border-bottom:1px solid var(--pixel-border-soft)";
+
+      deliveryStatsBody.innerHTML =
+        `<div class="card" style="margin-bottom:12px"><strong>Total del mes:</strong> ${grandCount} entregas · ${money(grandTotal)} en envíos</div>` +
+        list
+          .map((c) => {
+            const rows = [...c.days.entries()]
+              .sort((a, b) => b[0].localeCompare(a[0]))
+              .map(([day, d]) => {
+                const [y, m, dd] = day.split("-");
+                return `<tr><td style="${cell}">${dd}/${m}/${y}</td><td style="${cell};text-align:center">${d.count}</td><td style="${cell};text-align:right">${money(d.total)}</td></tr>`;
+              })
+              .join("");
+            return `<details class="card" style="margin-bottom:10px">
+              <summary style="cursor:pointer;display:flex;justify-content:space-between;gap:10px">
+                <strong>${escHtml(c.label)}</strong>
+                <span>${c.count} entregas · <strong>${money(c.total)}</strong></span>
+              </summary>
+              <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:14px">
+                <thead><tr style="opacity:.7"><th style="text-align:left;${cell}">Día</th><th style="${cell}">Entregas</th><th style="text-align:right;${cell}">Envíos</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </details>`;
+          })
+          .join("");
+    }
+
+    function openDeliveryModal() {
+      if (deliveryModalOverlay) deliveryModalOverlay.setAttribute("aria-hidden", "false");
+      loadDeliveryStats();
+    }
+    function closeDeliveryModal() {
+      if (deliveryModalOverlay) deliveryModalOverlay.setAttribute("aria-hidden", "true");
+    }
+    if (deliveryStatsBtn) deliveryStatsBtn.addEventListener("click", openDeliveryModal);
+    if (deliveryModalClose) deliveryModalClose.addEventListener("click", closeDeliveryModal);
+    if (deliveryModalOverlay) {
+      deliveryModalOverlay.addEventListener("click", (e) => {
+        if (e.target === deliveryModalOverlay) closeDeliveryModal();
+      });
+    }
+    document.getElementById("deliveryPrevMonth")?.addEventListener("click", () => {
+      deliveryMonth = new Date(deliveryMonth.getFullYear(), deliveryMonth.getMonth() - 1, 1);
+      loadDeliveryStats();
+    });
+    document.getElementById("deliveryNextMonth")?.addEventListener("click", () => {
+      deliveryMonth = new Date(deliveryMonth.getFullYear(), deliveryMonth.getMonth() + 1, 1);
+      loadDeliveryStats();
+    });
+
     /* ======= MONTHLY MODAL ======= */
     const monthStatsBtn = document.getElementById("monthStatsBtn");
     const monthModalOverlay = document.getElementById("monthModalOverlay");
@@ -775,7 +1183,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       });
     }
 
-    let autoRefreshEnabled = true;
+    let autoRefreshEnabled = false;
     let autoRefreshInterval = null;
 
     function toggleAutoRefresh() {
@@ -785,11 +1193,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         btn.classList.toggle("active", autoRefreshEnabled);
         btn.title = autoRefreshEnabled ? "Sincronización automática (ON)" : "Sincronización automática (OFF)";
       }
-      if (autoRefreshEnabled && !autoRefreshInterval) {
-        autoRefreshInterval = setInterval(() => {
-          loadData();
-        }, 20000);
-      } else if (!autoRefreshEnabled && autoRefreshInterval) {
+      if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
       }
@@ -802,21 +1206,469 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         btn.classList.toggle("active", autoRefreshEnabled);
         btn.title = autoRefreshEnabled ? "Sincronización automática (ON)" : "Sincronización automática (OFF)";
       }
-      if (autoRefreshEnabled && !autoRefreshInterval) {
-        autoRefreshInterval = setInterval(() => {
-          loadData();
-        }, 20000);
-      } else if (!autoRefreshEnabled && autoRefreshInterval) {
+      if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
       }
     }
 
+    
+    /* ======= CAFETERIA COST & PRICING CALCULATOR ======= */
+    const CAFE_DEFAULT_CONFIG = {
+      coffeeKg: 28000,
+      milkLiter: 1400,
+      plantMilkLiter: 3200,
+      packaging: 250,
+      extras: 60,
+      plantMilkFund: 50,
+      fee: 3,
+      targetMargin: 65,
+    };
+
+    const CAFE_PRESETS = {
+      espresso: { name: "Espresso Simple", coffee: 9, milk: 0, milkType: "none" },
+      doble: { name: "Espresso Doble", coffee: 18, milk: 0, milkType: "none" },
+      cortado: { name: "Cortado", coffee: 18, milk: 60, milkType: "regular" },
+      flat: { name: "Flat White", coffee: 18, milk: 150, milkType: "regular" },
+      latte: { name: "Latte / Café c/ Leche", coffee: 18, milk: 180, milkType: "regular" },
+      custom: { name: "Personalizado", coffee: 18, milk: 120, milkType: "regular" },
+    };
+
+    const CAFE_MENU_ITEMS = [
+      { name: "Espresso Simple", coffee: 9, milk: 0, milkType: "none" },
+      { name: "Espresso Doble", coffee: 18, milk: 0, milkType: "none" },
+      { name: "Americano", coffee: 18, milk: 0, milkType: "none" },
+      { name: "Cortado", coffee: 18, milk: 60, milkType: "regular" },
+      { name: "Flat White", coffee: 18, milk: 150, milkType: "regular" },
+      { name: "Cappuccino", coffee: 18, milk: 150, milkType: "regular" },
+      { name: "Café con Leche", coffee: 18, milk: 180, milkType: "regular" },
+      { name: "Latte XL", coffee: 18, milk: 240, milkType: "regular" },
+      { name: "Latte Vegetal", coffee: 18, milk: 180, milkType: "plant" },
+    ];
+
+    function getCafeConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("cafe_pricing_config") || "null");
+        if (saved && typeof saved === "object") {
+          return { ...CAFE_DEFAULT_CONFIG, ...saved };
+        }
+      } catch (e) { }
+      return { ...CAFE_DEFAULT_CONFIG };
+    }
+
+    function saveCafeConfig(cfg) {
+      localStorage.setItem("cafe_pricing_config", JSON.stringify(cfg));
+    }
+
+    let currentCafeConfig = getCafeConfig();
+
+    function roundCafePrice(price) {
+      if (!price || price <= 0) return 0;
+      if (price < 1000) {
+        return Math.round(price / 50) * 50;
+      }
+      return Math.round(price / 100) * 100;
+    }
+
+    function calculateBeverageCost({ coffeeGrams, milkMl, milkType, isTakeAway, hasExtras, config }) {
+      const cfg = config || currentCafeConfig;
+      const costCoffee = (Math.max(0, Number(coffeeGrams) || 0) * (Number(cfg.coffeeKg) || 0)) / 1000;
+      
+      let milkPrice = 0;
+      if (milkType === "plant") milkPrice = Number(cfg.plantMilkLiter) || 0;
+      else if (milkType === "regular") milkPrice = Number(cfg.milkLiter) || 0;
+      const costMilk = (Math.max(0, Number(milkMl) || 0) * milkPrice) / 1000;
+
+      const costPackaging = isTakeAway ? (Number(cfg.packaging) || 0) : 0;
+      const costExtras = hasExtras ? (Number(cfg.extras) || 0) : 0;
+      const costPlantMilkFund = Number(cfg.plantMilkFund) || 0;
+
+      const totalCost = costCoffee + costMilk + costPackaging + costExtras + costPlantMilkFund;
+
+      return {
+        totalCost,
+        costCoffee,
+        costMilk,
+        costPackaging,
+        costExtras,
+        costPlantMilkFund,
+      };
+    }
+
+    function calculateSuggestedPrice(totalCost, targetMarginPercent, feePercent) {
+      const margin = (Number(targetMarginPercent) || 0) / 100;
+      const fee = (Number(feePercent) || 0) / 100;
+      const denom = 1 - margin - fee;
+      if (denom <= 0.05) {
+        return Math.round(totalCost * 3);
+      }
+      return Math.round(totalCost / denom);
+    }
+
+    function renderCafeCalculator() {
+      const coffeeGrams = Number(document.getElementById("cafeCoffeeGrams")?.value || 0);
+      const milkMl = Number(document.getElementById("cafeMilkMl")?.value || 0);
+      const milkType = document.getElementById("cafeMilkType")?.value || "regular";
+      const isTakeAway = document.getElementById("cafeTakeAway")?.checked || false;
+      const hasExtras = document.getElementById("cafeExtras")?.checked || false;
+      const targetMargin = Number(document.getElementById("cafeTargetMargin")?.value || 65);
+      const paymentFee = Number(document.getElementById("cafePaymentFee")?.value || 3);
+
+      const costs = calculateBeverageCost({
+        coffeeGrams,
+        milkMl,
+        milkType,
+        isTakeAway,
+        hasExtras,
+        config: currentCafeConfig,
+      });
+
+      const rawSuggestedPrice = calculateSuggestedPrice(costs.totalCost, targetMargin, paymentFee);
+      const roundedPrice = roundCafePrice(rawSuggestedPrice);
+
+      const elTotalCost = document.getElementById("cafeTotalCost");
+      const elSuggested = document.getElementById("cafeSuggestedPrice");
+      const elNetProfit = document.getElementById("cafeNetProfit");
+      const elActualMargin = document.getElementById("cafeActualMargin");
+
+      if (elTotalCost) elTotalCost.textContent = "$" + Math.round(costs.totalCost).toLocaleString("es-AR");
+      if (elSuggested) {
+        elSuggested.textContent = "$" + roundedPrice.toLocaleString("es-AR");
+        elSuggested.dataset.rawPrice = rawSuggestedPrice;
+        elSuggested.dataset.roundedPrice = roundedPrice;
+      }
+
+      const netIncome = roundedPrice * (1 - (paymentFee / 100));
+      const profit = netIncome - costs.totalCost;
+      const realMargin = roundedPrice > 0 ? Math.round((profit / roundedPrice) * 1000) / 10 : 0;
+
+      if (elNetProfit) elNetProfit.textContent = "$" + Math.round(profit).toLocaleString("es-AR");
+      if (elActualMargin) elActualMargin.textContent = realMargin + "% neto";
+
+      const tagCoffee = document.getElementById("tagCostCoffee");
+      const tagMilk = document.getElementById("tagCostMilk");
+      const tagPkg = document.getElementById("tagCostPackaging");
+      const tagExt = document.getElementById("tagCostExtras");
+
+      if (tagCoffee) tagCoffee.textContent = "Café: $" + Math.round(costs.costCoffee).toLocaleString("es-AR");
+      if (tagMilk) tagMilk.textContent = "Leche: $" + Math.round(costs.costMilk).toLocaleString("es-AR");
+      if (tagPkg) tagPkg.textContent = "Vaso/Tapa: $" + Math.round(costs.costPackaging).toLocaleString("es-AR");
+      if (tagExt) tagExt.textContent = "Extras: $" + Math.round(costs.costExtras).toLocaleString("es-AR");
+
+      updateManualSimulator(costs.totalCost, paymentFee);
+      renderCafeMenuTable(targetMargin, paymentFee);
+    }
+
+    function updateManualSimulator(totalCost, paymentFee) {
+      const elManualInput = document.getElementById("cafeManualPrice");
+      const elManualStats = document.getElementById("cafeManualStats");
+      if (!elManualInput || !elManualStats) return;
+
+      const manualPrice = Number(elManualInput.value || 0);
+      if (!manualPrice || manualPrice <= 0) {
+        elManualStats.innerHTML = "<span>Ingresá un precio de venta para evaluar rentabilidad.</span>";
+        return;
+      }
+
+      const netIncome = manualPrice * (1 - (paymentFee / 100));
+      const profit = netIncome - totalCost;
+      const margin = Math.round((profit / manualPrice) * 1000) / 10;
+      const isPositive = profit >= 0;
+
+      elManualStats.innerHTML = `
+        <span>Ganancia: <strong style="color: ${isPositive ? '#22c55e' : '#ef4444'}">${Math.round(profit).toLocaleString("es-AR")}</strong></span>
+        <span>Margen: <strong style="color: ${isPositive ? '#22c55e' : '#ef4444'}">${margin}%</strong></span>
+      `;
+    }
+
+    function renderCafeMenuTable(targetMargin, paymentFee) {
+      const tbody = document.getElementById("cafeMenuTableBody");
+      const marginLabel = document.getElementById("cafeMenuMarginLabel");
+      if (!tbody) return;
+
+      if (marginLabel) marginLabel.textContent = targetMargin + "%";
+
+      let rowsHtml = "";
+      for (const item of CAFE_MENU_ITEMS) {
+        const salonCostObj = calculateBeverageCost({
+          coffeeGrams: item.coffee,
+          milkMl: item.milk,
+          milkType: item.milkType,
+          isTakeAway: false,
+          hasExtras: true,
+          config: currentCafeConfig,
+        });
+        const takeCostObj = calculateBeverageCost({
+          coffeeGrams: item.coffee,
+          milkMl: item.milk,
+          milkType: item.milkType,
+          isTakeAway: true,
+          hasExtras: true,
+          config: currentCafeConfig,
+        });
+
+        const salonSug = roundCafePrice(calculateSuggestedPrice(salonCostObj.totalCost, targetMargin, paymentFee));
+        const takeSug = roundCafePrice(calculateSuggestedPrice(takeCostObj.totalCost, targetMargin, paymentFee));
+
+        const salonProfit = salonSug * (1 - paymentFee / 100) - salonCostObj.totalCost;
+
+        rowsHtml += `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td>${Math.round(salonCostObj.totalCost).toLocaleString("es-AR")}</td>
+            <td>${Math.round(takeCostObj.totalCost).toLocaleString("es-AR")}</td>
+            <td><strong style="color: #eab308">${salonSug.toLocaleString("es-AR")}</strong></td>
+            <td><strong style="color: #fef08a">${takeSug.toLocaleString("es-AR")}</strong></td>
+            <td style="color: #22c55e">+${Math.round(salonProfit).toLocaleString("es-AR")}</td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function updateBaseInputHints() {
+      const coffee = Number(document.getElementById("baseCoffeeKg")?.value || 0);
+      const milk = Number(document.getElementById("baseMilkLiter")?.value || 0);
+      const plant = Number(document.getElementById("basePlantMilkLiter")?.value || 0);
+
+      const hCoffee = document.getElementById("hintCoffeePerGram");
+      const hMilk = document.getElementById("hintMilkPerMl");
+      const hPlant = document.getElementById("hintPlantMilkPerMl");
+
+      if (hCoffee) hCoffee.textContent = "$" + (coffee / 1000).toFixed(2) + " / g";
+      if (hMilk) hMilk.textContent = "$" + (milk / 1000).toFixed(2) + " / ml";
+      if (hPlant) hPlant.textContent = "$" + (plant / 1000).toFixed(2) + " / ml";
+    }
+
+    function loadCafeInputsForm() {
+      const cfg = currentCafeConfig;
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      };
+      setVal("baseCoffeeKg", cfg.coffeeKg);
+      setVal("baseMilkLiter", cfg.milkLiter);
+      setVal("basePlantMilkLiter", cfg.plantMilkLiter);
+      setVal("basePackaging", cfg.packaging);
+      setVal("baseExtras", cfg.extras);
+      setVal("basePlantMilkFund", cfg.plantMilkFund ?? 50);
+      setVal("baseFee", cfg.fee);
+      setVal("cafePaymentFee", cfg.fee);
+      setVal("cafeTargetMargin", cfg.targetMargin);
+      updateBaseInputHints();
+    }
+
+    function setupCafeEventListeners() {
+      const cafeBtn = document.getElementById("cafeCalcBtn");
+      const overlay = document.getElementById("cafeModalOverlay");
+      const closeBtn = document.getElementById("cafeModalClose");
+
+      if (cafeBtn && overlay) {
+        cafeBtn.addEventListener("click", () => {
+          overlay.setAttribute("aria-hidden", "false");
+          loadCafeInputsForm();
+          renderCafeCalculator();
+        });
+      }
+
+      if (closeBtn && overlay) {
+        closeBtn.addEventListener("click", () => {
+          overlay.setAttribute("aria-hidden", "true");
+        });
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) {
+            overlay.setAttribute("aria-hidden", "true");
+          }
+        });
+      }
+
+      // Tabs switching
+      document.querySelectorAll(".cafe-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".cafe-tab-btn").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".cafe-tab-content").forEach((c) => c.classList.remove("active"));
+          btn.classList.add("active");
+          const tabKey = btn.dataset.tab;
+          const targetContent = document.getElementById("cafeTabContent" + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
+          if (targetContent) targetContent.classList.add("active");
+        });
+      });
+
+      // Presets
+      document.querySelectorAll(".cafe-preset-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".cafe-preset-btn").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const presetKey = btn.dataset.preset;
+          const preset = CAFE_PRESETS[presetKey];
+          if (preset) {
+            const elCoffee = document.getElementById("cafeCoffeeGrams");
+            const elMilk = document.getElementById("cafeMilkMl");
+            const elType = document.getElementById("cafeMilkType");
+            if (elCoffee) elCoffee.value = preset.coffee;
+            if (elMilk) elMilk.value = preset.milk;
+            if (elType) elType.value = preset.milkType;
+            renderCafeCalculator();
+          }
+        });
+      });
+
+      // Quick margin buttons
+      document.querySelectorAll(".cafe-badge-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".cafe-badge-btn").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const marginVal = btn.dataset.margin;
+          const elTarget = document.getElementById("cafeTargetMargin");
+          if (elTarget) {
+            elTarget.value = marginVal;
+            renderCafeCalculator();
+          }
+        });
+      });
+
+      // Calculator inputs listeners
+      const calcInputIds = [
+        "cafeCoffeeGrams",
+        "cafeMilkMl",
+        "cafeMilkType",
+        "cafeTakeAway",
+        "cafeExtras",
+        "cafeTargetMargin",
+        "cafePaymentFee",
+        "cafeManualPrice",
+      ];
+      calcInputIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener("input", renderCafeCalculator);
+          el.addEventListener("change", renderCafeCalculator);
+        }
+      });
+
+      // Round price toggle
+      const roundBtn = document.getElementById("cafeRoundPriceBtn");
+      if (roundBtn) {
+        roundBtn.addEventListener("click", () => {
+          const elSuggested = document.getElementById("cafeSuggestedPrice");
+          if (!elSuggested) return;
+          const raw = Number(elSuggested.dataset.rawPrice || 0);
+          const rounded = Number(elSuggested.dataset.roundedPrice || 0);
+          const currentShowing = Number(elSuggested.textContent.replace(/[^\d]/g, ""));
+          if (currentShowing === rounded) {
+            elSuggested.textContent = "$" + raw.toLocaleString("es-AR");
+            roundBtn.textContent = "Ver redondeado";
+          } else {
+            elSuggested.textContent = "$" + rounded.toLocaleString("es-AR");
+            roundBtn.textContent = "Ver exacto";
+          }
+        });
+      }
+
+      // Base Inputs change listeners -> Auto save to localStorage
+      const baseInputIds = [
+        "baseCoffeeKg",
+        "baseMilkLiter",
+        "basePlantMilkLiter",
+        "basePackaging",
+        "baseExtras",
+        "basePlantMilkFund",
+        "baseFee",
+      ];
+      baseInputIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          const handler = () => {
+            currentCafeConfig = {
+              coffeeKg: Number(document.getElementById("baseCoffeeKg")?.value || CAFE_DEFAULT_CONFIG.coffeeKg),
+              milkLiter: Number(document.getElementById("baseMilkLiter")?.value || CAFE_DEFAULT_CONFIG.milkLiter),
+              plantMilkLiter: Number(document.getElementById("basePlantMilkLiter")?.value || CAFE_DEFAULT_CONFIG.plantMilkLiter),
+              packaging: Number(document.getElementById("basePackaging")?.value || CAFE_DEFAULT_CONFIG.packaging),
+              extras: Number(document.getElementById("baseExtras")?.value || CAFE_DEFAULT_CONFIG.extras),
+              plantMilkFund: Number(document.getElementById("basePlantMilkFund")?.value || CAFE_DEFAULT_CONFIG.plantMilkFund),
+              fee: Number(document.getElementById("baseFee")?.value || CAFE_DEFAULT_CONFIG.fee),
+              targetMargin: Number(document.getElementById("cafeTargetMargin")?.value || CAFE_DEFAULT_CONFIG.targetMargin),
+            };
+            saveCafeConfig(currentCafeConfig);
+            updateBaseInputHints();
+            renderCafeCalculator();
+
+            const ind = document.getElementById("cafeSaveIndicator");
+            if (ind) {
+              ind.textContent = "✓ Guardado";
+              ind.style.opacity = "1";
+              setTimeout(() => { if (ind) ind.style.opacity = "0.7"; }, 1500);
+            }
+          };
+          el.addEventListener("input", handler);
+          el.addEventListener("change", handler);
+        }
+      });
+
+      // Reset defaults
+      const resetBtn = document.getElementById("cafeResetDefaultsBtn");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          if (confirm("¿Restablecer costos a los valores por defecto?")) {
+            currentCafeConfig = { ...CAFE_DEFAULT_CONFIG };
+            saveCafeConfig(currentCafeConfig);
+            loadCafeInputsForm();
+            renderCafeCalculator();
+          }
+        });
+      }
+
+      // Copy menu summary
+      const copyBtn = document.getElementById("cafeCopyMenuBtn");
+      const copyFeedback = document.getElementById("cafeCopyFeedback");
+      if (copyBtn) {
+        copyBtn.addEventListener("click", () => {
+          const margin = Number(document.getElementById("cafeTargetMargin")?.value || 65);
+          const fee = Number(document.getElementById("cafePaymentFee")?.value || 3);
+
+          let text = `☕ CARTA Y PRECIOS SUGERIDOS (Margen ${margin}%)\n\n`;
+          for (const item of CAFE_MENU_ITEMS) {
+            const salonCostObj = calculateBeverageCost({
+              coffeeGrams: item.coffee,
+              milkMl: item.milk,
+              milkType: item.milkType,
+              isTakeAway: false,
+              hasExtras: true,
+              config: currentCafeConfig,
+            });
+            const takeCostObj = calculateBeverageCost({
+              coffeeGrams: item.coffee,
+              milkMl: item.milk,
+              milkType: item.milkType,
+              isTakeAway: true,
+              hasExtras: true,
+              config: currentCafeConfig,
+            });
+            const salonSug = roundCafePrice(calculateSuggestedPrice(salonCostObj.totalCost, margin, fee));
+            const takeSug = roundCafePrice(calculateSuggestedPrice(takeCostObj.totalCost, margin, fee));
+
+            text += `• ${item.name}: Salón ${salonSug.toLocaleString("es-AR")} (Costo ${Math.round(salonCostObj.totalCost)}) | Llevar ${takeSug.toLocaleString("es-AR")}\n`;
+          }
+
+          navigator.clipboard.writeText(text).then(() => {
+            if (copyFeedback) {
+              copyFeedback.textContent = "¡Copiado al portapapeles!";
+              setTimeout(() => { if (copyFeedback) copyFeedback.textContent = ""; }, 2500);
+            }
+          }).catch(() => {
+            if (copyFeedback) copyFeedback.textContent = "Error al copiar";
+          });
+        });
+      }
+    }
+
+
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("day").value = getLocalDateString(businessToday());
       updateDayLabel();
       loadData();
-      setAutoRefreshState(true);
+      setAutoRefreshState(false);
+      setupCafeEventListeners();
       const autoRefreshBtn = document.getElementById("autoRefreshBtn");
       if (autoRefreshBtn) {
         autoRefreshBtn.addEventListener("click", toggleAutoRefresh);
@@ -888,7 +1740,16 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         return;
       }
 
-      const entries = Object.entries(itemsMap)
+      const merged = {};
+      for (const [rawName, rawQty] of Object.entries(itemsMap)) {
+        const cleanName = String(rawName || '')
+          .replace(/ - \d+\s*x\s*/gi, ' - ')
+          .replace(/^\d+\s*x\s*/gi, '')
+          .trim();
+        merged[cleanName] = (merged[cleanName] || 0) + Number(rawQty || 0);
+      }
+
+      const entries = Object.entries(merged)
         .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
         .slice(0, limit);
 
@@ -1037,31 +1898,52 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       return uniq.join(", ");
     }
 
-    let lastOrdersDetail = [];
-    function buildOrderNotifyText(order) {
-      const rawMode = (order?.mode ?? order?.modo ?? order?.orderMode ?? "").toString().toLowerCase();
-      const isRetiro = rawMode.includes("retiro");
-      const mode = isRetiro ? "Retiro" : "Delivery";
-      const direccion = order?.address || order?.direccion || "";
-      const total = getOrderTotal(order);
-      const msgTotal = Number.isFinite(total) ? `$${total.toLocaleString("es-AR")}` : "N/A";
-      let itemsArr = [];
-      if (Array.isArray(order?.items)) {
-        for (const it of order.items) {
-          const name = String(it?.name ?? "N/A");
-          const qty = Number(it?.quantity ?? 1);
-          itemsArr.push(`${name} x${qty}`);
+    function collectDrinkDetails(item) {
+      if (!item || typeof item !== "object") return "";
+
+      const detailKeys = [
+        "size", "tamaño", "tamano", "medida", "volume", "volumen", "vaso",
+        "temperature", "temperatura", "temp", "servingTemperature",
+        "milk", "leche", "tipoLeche", "ice", "hielo",
+        "sweetener", "endulzante", "sugar", "azucar", "azúcar",
+        "preparation", "preparacion", "preparación", "style", "estilo",
+        "decaf", "descafeinado"
+      ];
+      const values = [];
+      const addValue = (value) => {
+        if (value === null || value === undefined || value === false) return;
+        if (Array.isArray(value)) {
+          value.forEach(addValue);
+          return;
         }
-      } else if (order?.items && typeof order.items === "object") {
-        for (const [name, qty] of Object.entries(order.items)) {
-          itemsArr.push(`${String(name)} x${Number(qty ?? 1)}`);
+        if (typeof value === "object") {
+          addValue(value.name ?? value.label ?? value.value);
+          return;
         }
-      }
-      itemsArr = itemsArr.slice(0, 8);
-      const productosLine = itemsArr.length > 0 ? `\nProductos: ${itemsArr.join(", ")}` : "";
-      const direccionLine = !isRetiro && direccion ? `\nDirección: ${direccion}` : "";
-      return `\nModo: ${mode}${direccionLine}${productosLine}\nTotal: ${msgTotal}`;
+        const text = String(value).trim();
+        if (text && text !== "true" && !values.includes(text)) values.push(text);
+      };
+
+      detailKeys.forEach((key) => addValue(item[key]));
+      ["details", "detalles", "customizations", "customizaciones", "attributes", "atributos"].forEach((key) => {
+        const group = item[key];
+        if (!group || typeof group !== "object") return;
+        if (Array.isArray(group)) {
+          group.forEach((detail) => {
+            const name = String(detail?.name ?? detail?.label ?? "").toLowerCase();
+            if (detailKeys.some((key) => name.includes(key.toLowerCase()))) addValue(detail?.value ?? detail?.name);
+          });
+          return;
+        }
+        Object.entries(group).forEach(([name, value]) => {
+          if (detailKeys.some((key) => name.toLowerCase().includes(key.toLowerCase()))) addValue(value);
+        });
+      });
+
+      return values.slice(0, 5).join(" · ");
     }
+
+    let lastOrdersDetail = [];
     function renderOrdersList(orders = []) {
       ordersListContainer.innerHTML = "";
       if (!orders || orders.length === 0) {
@@ -1107,11 +1989,15 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         if (Array.isArray(order.items)) {
           for (const item of order.items) {
             const flavors = collectFlavors(item);
+            const drinkDetails = collectDrinkDetails(item);
             const nameHtml = `${escapeHtml(item.name || "N/A")}`;
             const flavorsHtml = flavors
               ? `<div class="order-flavors">${escapeHtml(flavors)}</div>`
               : "";
-            itemsHtml += `<li><div class="item-left"><div class="item-name">${nameHtml}</div>${flavorsHtml}</div><span class="qty">${item.quantity || 1}</span></li>`;
+            const drinkDetailsHtml = drinkDetails
+              ? `<div class="order-details">${escapeHtml(drinkDetails)}</div>`
+              : "";
+            itemsHtml += `<li><div class="item-left"><div class="item-name">${nameHtml}</div>${flavorsHtml}${drinkDetailsHtml}</div><span class="qty">${item.quantity || 1}</span></li>`;
           }
         } else if (order.items && typeof order.items === "object") {
           for (const [name, qty] of Object.entries(order.items)) {
@@ -1148,6 +2034,347 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       }
     }
 
+
+    async function fetchDailyFromPB(dateKey) {
+      let dailyRecord = null;
+      try {
+        const filter = encodeURIComponent(`day="${dateKey}"`);
+        const res = await fetch(`${PB_URL}/api/collections/daily_stats/records?filter=${filter}&perPage=1`);
+        if (res.ok) {
+          const json = await res.json();
+          dailyRecord = json.items?.[0] || null;
+        }
+      } catch (err) {
+        console.warn("Error fetching daily_stats from PB:", err);
+      }
+
+      if (!dailyRecord) {
+        dailyRecord = {
+          day: dateKey,
+          revenue: 0,
+          ordersCount: 0,
+          itemsCount: {},
+          paidByMethod: {},
+          revenueByMethod: {},
+          ordersByMethod: {},
+          ordersByMode: {},
+          deliveryByAddress: {},
+        };
+      }
+
+      let orders_detail = [];
+      try {
+        const filter = encodeURIComponent(`businessDate="${dateKey}"`);
+        const res = await fetch(`${PB_URL}/api/collections/orders/records?filter=${filter}&sort=-created&perPage=500`);
+        if (res.ok) {
+          const json = await res.json();
+          orders_detail = json.items || [];
+        }
+      } catch (err) {
+        console.warn("Error fetching orders from PB:", err);
+      }
+
+      const safe = (v) => (v && typeof v === "object" && !Array.isArray(v) ? { ...v } : {});
+      const asNumber = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+      return {
+        day: dailyRecord.day || dateKey,
+        revenue: asNumber(dailyRecord.revenue),
+        ordersCount: asNumber(dailyRecord.ordersCount),
+        itemsCount: safe(dailyRecord.itemsCount),
+        paidByMethod: safe(dailyRecord.paidByMethod),
+        revenueByMethod: safe(dailyRecord.revenueByMethod),
+        ordersByMethod: safe(dailyRecord.ordersByMethod),
+        ordersByMode: safe(dailyRecord.ordersByMode),
+        deliveryByAddress: safe(dailyRecord.deliveryByAddress),
+        orders_detail,
+      };
+    }
+
+    async function fetchMonthlyFromPB(monthParam) {
+      let targetDate;
+      if (monthParam) {
+        targetDate = new Date(monthParam + "-01");
+      } else {
+        targetDate = new Date();
+        if (targetDate.getDate() < 3) {
+          targetDate.setMonth(targetDate.getMonth() - 1);
+        }
+        targetDate.setDate(1);
+      }
+
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth() + 1;
+      const monthStr = String(month).padStart(2, "0");
+      const monthKey = `${year}-${monthStr}`;
+
+      const firstDay = `${monthKey}-01`;
+      const lastDayObj = new Date(year, month, 0);
+      const lastDay = `${monthKey}-${String(lastDayObj.getDate()).padStart(2, "0")}`;
+
+      let dailyStats = [];
+      try {
+        const filter = encodeURIComponent(`day >= "${firstDay}" && day <= "${lastDay}"`);
+        const res = await fetch(`${PB_URL}/api/collections/daily_stats/records?filter=${filter}&perPage=500`);
+        if (res.ok) {
+          const json = await res.json();
+          dailyStats = json.items || [];
+        }
+      } catch (e) {
+        dailyStats = [];
+      }
+
+      const asNumber = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+      const safe = (v) => (v && typeof v === "object" && !Array.isArray(v) ? { ...v } : {});
+
+      let totalRevenue = 0;
+      let totalOrders = 0;
+      let bestDayOrders = { day: "", count: 0 };
+      let bestDayRevenue = { day: "", revenue: 0 };
+      let itemsCount = {};
+      let paidByMethod = { efectivo: 0, transferencia: 0, debito: 0 };
+
+      for (const stat of dailyStats) {
+        const rev = asNumber(stat.revenue);
+        const ord = asNumber(stat.ordersCount);
+        totalRevenue += rev;
+        totalOrders += ord;
+
+        if (ord > bestDayOrders.count) {
+          bestDayOrders = { day: stat.day, count: ord };
+        }
+        if (rev > bestDayRevenue.revenue) {
+          bestDayRevenue = { day: stat.day, revenue: rev };
+        }
+
+        const statItems = safe(stat.itemsCount);
+        for (const [name, qty] of Object.entries(statItems)) {
+          const cleanName = String(name || '')
+            .replace(/ - \d+\s*x\s*/gi, ' - ')
+            .replace(/^\d+\s*x\s*/gi, '')
+            .trim();
+          itemsCount[cleanName] = (itemsCount[cleanName] || 0) + asNumber(qty);
+        }
+
+        const statPayments = safe(stat.paidByMethod);
+        paidByMethod.efectivo += asNumber(statPayments.efectivo);
+        paidByMethod.transferencia += asNumber(statPayments.transferencia);
+        paidByMethod.debito += asNumber(statPayments.debito);
+      }
+
+      const topProducts = Object.entries(itemsCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name, qty]) => ({ name, qty }));
+
+      const daysWithData = dailyStats.length;
+      const avgRevenue = daysWithData > 0 ? Math.round(totalRevenue / daysWithData) : 0;
+      const avgOrders = daysWithData > 0 ? Math.round((totalOrders / daysWithData) * 10) / 10 : 0;
+      const ticketPromedio = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+      const totalPayments = paidByMethod.efectivo + paidByMethod.transferencia + paidByMethod.debito;
+      const pctEfectivo = totalPayments > 0 ? Math.round((paidByMethod.efectivo / totalPayments) * 100) : 0;
+      const pctTransfer = totalPayments > 0 ? Math.round((paidByMethod.transferencia / totalPayments) * 100) : 0;
+      const pctDebito = totalPayments > 0 ? Math.round((paidByMethod.debito / totalPayments) * 100) : 0;
+
+      let prevMonthRevenue = 0;
+      let prevMonthOrders = 0;
+      const prevMonthDate = new Date(year, month - 2, 1);
+      const prevFirstDay = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}-01`;
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
+      const lastDayOfMonth = new Date(year, month, 0).getDate();
+      const compareDay = isCurrentMonth ? Math.min(today.getDate(), lastDayOfMonth) : lastDayOfMonth;
+      const prevLastDay = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}-${String(compareDay).padStart(2, "0")}`;
+
+      try {
+        const prevFilter = encodeURIComponent(`day >= "${prevFirstDay}" && day <= "${prevLastDay}"`);
+        const prevRes = await fetch(`${PB_URL}/api/collections/daily_stats/records?filter=${prevFilter}&perPage=500`);
+        if (prevRes.ok) {
+          const prevStats = await prevRes.json();
+          for (const stat of prevStats.items || []) {
+            prevMonthRevenue += asNumber(stat.revenue);
+            prevMonthOrders += asNumber(stat.ordersCount);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      const revGrowth = prevMonthRevenue > 0
+        ? Math.round(((totalRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
+        : 0;
+      const ordersGrowth = prevMonthOrders > 0
+        ? Math.round(((totalOrders - prevMonthOrders) / prevMonthOrders) * 100)
+        : 0;
+
+      const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      const monthName = monthNames[month - 1];
+
+      return {
+        month: monthKey,
+        monthName: `${monthName} ${year}`,
+        totalRevenue,
+        totalOrders,
+        bestDayOrders,
+        bestDayRevenue,
+        topProducts,
+        avgRevenue,
+        avgOrders,
+        ticketPromedio,
+        paidByMethod,
+        paymentPct: { efectivo: pctEfectivo, transferencia: pctTransfer, debito: pctDebito },
+        prevMonthRevenue,
+        prevMonthOrders,
+        revGrowth,
+        ordersGrowth,
+        daysWithData,
+      };
+    }
+
+    async function fetchHourlyFromPB(monthParam) {
+      let targetDate;
+      if (monthParam) {
+        targetDate = new Date(monthParam + "-01");
+      } else {
+        targetDate = new Date();
+        if (targetDate.getDate() < 3) {
+          targetDate.setMonth(targetDate.getMonth() - 1);
+        }
+        targetDate.setDate(1);
+      }
+
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth() + 1;
+      const monthStr = String(month).padStart(2, "0");
+      const monthKey = `${year}-${monthStr}`;
+
+      const firstDay = `${monthKey}-01`;
+      const lastDayObj = new Date(year, month, 0);
+      const lastDay = `${monthKey}-${String(lastDayObj.getDate()).padStart(2, "0")}`;
+
+      let allOrders = [];
+      try {
+        let page = 1;
+        while (true) {
+          const filter = encodeURIComponent(`businessDate >= "${firstDay}" && businessDate <= "${lastDay}"`);
+          const res = await fetch(`${PB_URL}/api/collections/orders/records?filter=${filter}&sort=created&perPage=500&page=${page}`);
+          if (!res.ok) break;
+          const data = await res.json();
+          allOrders.push(...(data.items || []));
+          if (page >= (data.totalPages || 1)) break;
+          page++;
+        }
+      } catch (e) {
+        console.warn("Error fetching orders from PB:", e);
+      }
+
+      const hourSlots = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1];
+      const hourlyStats = {};
+      for (const hour of hourSlots) {
+        const label = hour === 0 ? "00" : String(hour).padStart(2, "0");
+        hourlyStats[hour] = { orders: 0, revenue: 0, label: `${label}:00` };
+      }
+
+      const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+      const dayStats = {};
+      const hourlyByDay = {};
+      const daysCountInMonth = {};
+
+      for (let d = 0; d < 7; d++) {
+        dayStats[d] = { orders: 0, revenue: 0, name: dayNames[d] };
+        hourlyByDay[d] = {};
+        daysCountInMonth[d] = 0;
+        for (const hour of hourSlots) {
+          hourlyByDay[d][hour] = { orders: 0, revenue: 0 };
+        }
+      }
+
+      const TIMEZONE_OFFSET = -3;
+      const uniqueDays = new Set();
+      for (const order of allOrders) {
+        const serverDate = new Date(order.created);
+        const localDate = new Date(serverDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000);
+        const dayIndex = localDate.getDay();
+        uniqueDays.add(`${dayIndex}-${localDate.getDate()}`);
+      }
+      for (const key of uniqueDays) {
+        const dayIndex = parseInt(key.split("-")[0]);
+        daysCountInMonth[dayIndex]++;
+      }
+
+      for (const order of allOrders) {
+        const serverDate = new Date(order.created);
+        const localHour = serverDate.getHours() + TIMEZONE_OFFSET;
+        let adjustedHour = localHour;
+        if (adjustedHour < 0) adjustedHour += 24;
+
+        const localDate = new Date(serverDate.getTime() + TIMEZONE_OFFSET * 60 * 60 * 1000);
+        const dayIndex = localDate.getDay();
+
+        if (hourlyStats[adjustedHour] !== undefined) {
+          const tot = (typeof getOrderTotal === "function" ? getOrderTotal(order) : Number(order.total || 0)) || 0;
+          hourlyStats[adjustedHour].orders += 1;
+          hourlyStats[adjustedHour].revenue += tot;
+
+          dayStats[dayIndex].orders += 1;
+          dayStats[dayIndex].revenue += tot;
+          hourlyByDay[dayIndex][adjustedHour].orders += 1;
+          hourlyByDay[dayIndex][adjustedHour].revenue += tot;
+        }
+      }
+
+      const totalDays = uniqueDays.size;
+      const result = hourSlots.map(hour => ({
+        hour,
+        label: hourlyStats[hour].label,
+        orders: hourlyStats[hour].orders,
+        avgOrders: totalDays > 0 ? Math.round((hourlyStats[hour].orders / totalDays) * 10) / 10 : 0,
+        revenue: Math.round(hourlyStats[hour].revenue)
+      }));
+
+      const daySummary = dayNames.map((name, idx) => ({
+        dayIndex: idx,
+        name,
+        orders: dayStats[idx].orders,
+        daysCount: daysCountInMonth[idx],
+        avgOrders: daysCountInMonth[idx] > 0 ? Math.round((dayStats[idx].orders / daysCountInMonth[idx]) * 10) / 10 : 0,
+        revenue: Math.round(dayStats[idx].revenue)
+      }));
+
+      const hourlyByDayResult = {};
+      for (const [dayIdx, hours] of Object.entries(hourlyByDay)) {
+        const dayCount = daysCountInMonth[dayIdx] || 1;
+        hourlyByDayResult[dayIdx] = hourSlots.map(hour => ({
+          hour,
+          label: hour === 0 ? "00" : String(hour).padStart(2, "0"),
+          orders: hours[hour].orders,
+          avgOrders: dayCount > 0 ? Math.round((hours[hour].orders / dayCount) * 10) / 10 : 0,
+          revenue: Math.round(hours[hour].revenue)
+        }));
+      }
+
+      const totalOrders = result.reduce((sum, h) => sum + h.orders, 0);
+      const totalRevenue = result.reduce((sum, h) => sum + h.revenue, 0);
+
+      const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      const monthName = monthNames[month - 1];
+
+      return {
+        month: monthKey,
+        monthName: `${monthName} ${year}`,
+        totalOrders,
+        totalRevenue,
+        hourlyData: result,
+        daySummary,
+        hourlyByDay: hourlyByDayResult,
+        prevMonthOrders: 0,
+        prevMonthRevenue: 0,
+        ordersGrowth: 0,
+        revenueGrowth: 0,
+      };
+    }
+
     function getMockData() {
       return {
         day: new Date().toISOString().slice(0, 10),
@@ -1157,7 +2384,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         paidByMethod: { efectivo: 2, mp: 3 },
         revenueByMethod: {},
         ordersByMethod: {},
-        ordersByMode: { delivery: 3, retiro: 2 },
+        ordersByMode: { delivery: 3, retiro: 1, local: 1 },
         deliveryByAddress: {},
         orders_detail: [
           {
@@ -1202,30 +2429,41 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         return;
       }
 
-      const url = "/api/daily?day=" + day;
-
-      let data = null;
       try {
+        let data = null;
+      try {
+        const url = (API_BASE ? API_BASE : "") + "/api/daily?day=" + day;
         const res = await fetch(url);
-        if (!res.ok) {
-          // Check if local dev
-          if (res.status === 404 && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
-            console.warn("API 404 in local dev, using mock data.");
-            elErr.textContent = "⚠️ Modo local: API no encontrada, usando datos de prueba.";
-            elErr.style.color = "#856404";
-            elErr.style.backgroundColor = "#fff3cd";
-            elErr.style.padding = "0.5rem";
-            elErr.style.borderRadius = "4px";
-            data = getMockData();
-          } else {
-            const txt = await res.text().catch(() => "");
-            throw new Error(`${res.status} ${txt}`);
-          }
-        } else {
+        if (res.ok) {
           data = await res.json();
         }
+      } catch (e) {
+        console.warn("API diaria no disponible vía endpoint, consultando PocketBase...", e);
+      }
 
-        if (!data) throw new Error("No data received");
+      if (!data) {
+        try {
+          data = await fetchDailyFromPB(day);
+        } catch (pbErr) {
+          console.error("Error al consultar PocketBase:", pbErr);
+        }
+      }
+
+      if (!data) {
+        if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+          console.warn("API 404 in local dev, using mock data.");
+          elErr.textContent = "⚠️ Modo local: API no encontrada, usando datos de prueba.";
+          elErr.style.color = "#856404";
+          elErr.style.backgroundColor = "#fff3cd";
+          elErr.style.padding = "0.5rem";
+          elErr.style.borderRadius = "4px";
+          data = getMockData();
+        } else {
+          throw new Error("No data received");
+        }
+      }
+
+      if (!data) throw new Error("No data received");
 
         // ===== TRANSFERENCIA POR MODO =====
         let transferDelivery = 0;
@@ -1255,6 +2493,12 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
           "retiro",
           "Retiro",
         ]);
+        const localCount = safeMethodValue(ordersByMode, [
+          "local",
+          "Local",
+          "comer en el local",
+          "Comer en el local",
+        ]);
 
         const dailyRevenue = Number(data.revenue) || 0;
         const dailyOrdersCount = Number(data.ordersCount) || 0;
@@ -1263,7 +2507,8 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         const rows = [
           ["Pedidos", dailyOrdersCount || 0],
           ['<span class="list-indent">Delivery</span>', deliveryCount],
-          ['<span class="list-indent">Retiro</span>', pickupCount]
+          ['<span class="list-indent">Retiro</span>', pickupCount],
+          ['<span class="list-indent">Retiro en el local</span>', localCount]
         ];
 
         rows.forEach(([label, val]) => {
@@ -1304,21 +2549,6 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         renderTopItemsRow(lastItemsCount, 20);
         renderOrdersList(data.orders_detail);
 
-        const displayOrdersCount = dailyOrdersCount || data.orders_detail?.length || 0;
-        if (typeof displayOrdersCount === "number") {
-          if (lastOrdersCount === null) {
-            lastOrdersCount = displayOrdersCount;
-          } else if (displayOrdersCount > lastOrdersCount) {
-            lastOrdersCount = displayOrdersCount;
-            const newest = Array.isArray(data.orders_detail) ? data.orders_detail[0] || null : null;
-            const text = buildOrderNotifyText(newest || {});
-            fetch("/api/notify-telegram", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ text }),
-            }).catch(() => { });
-          }
-        }
       } catch (err) {
         elErr.textContent = "Error: " + (err?.message || err);
         console.error(err);
@@ -1360,18 +2590,20 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       monthList.innerHTML = '<span class="subtitle">Cargando...</span>';
 
       try {
-        const url = "/api/monthly?month=" + currentMonth;
-        const res = await fetch(url);
-
-        if (!res.ok) {
-          if (res.status === 404 && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
-            monthList.innerHTML = '<span class="subtitle">API no encontrada. Ejecutá el dev server de Vercel/Cloudflare.</span>';
-            return;
+        let data = null;
+        try {
+          const url = (API_BASE ? API_BASE : "") + "/api/monthly?month=" + currentMonth;
+          const res = await fetch(url);
+          if (res.ok) {
+            data = await res.json();
           }
-          throw new Error(`${res.status}`);
+        } catch (e) {
+          console.warn("API mensual no disponible vía endpoint, consultando PocketBase...", e);
         }
 
-        const data = await res.json();
+        if (!data) {
+          data = await fetchMonthlyFromPB(currentMonth);
+        }
 
         if (data.error) throw new Error(data.details);
 
@@ -1525,18 +2757,20 @@ document.addEventListener("DOMContentLoaded", () => {
       if (hourlyMatrix) hourlyMatrix.innerHTML = '<div class="hourly-matrix-loading">Cargando...</div>';
 
       try {
-        const url = "/api/hourly-stats?month=" + currentHourlyMonth;
-        const res = await fetch(url);
-
-        if (!res.ok) {
-          if (res.status === 404 && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
-            hourlyGrid.innerHTML = '<div class="hourly-loading">API no encontrada. Ejecutá el dev server.</div>';
-            return;
+        let data = null;
+        try {
+          const url = (API_BASE ? API_BASE : "") + "/api/hourly-stats?month=" + currentHourlyMonth;
+          const res = await fetch(url);
+          if (res.ok) {
+            data = await res.json();
           }
-          throw new Error(`${res.status}`);
+        } catch (e) {
+          console.warn("API horaria no disponible vía endpoint, consultando PocketBase...", e);
         }
 
-        const data = await res.json();
+        if (!data) {
+          data = await fetchHourlyFromPB(currentHourlyMonth);
+        }
         if (data.error) throw new Error(data.details);
 
         hourlyDataCache = data;

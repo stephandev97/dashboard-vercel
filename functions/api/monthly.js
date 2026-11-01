@@ -66,7 +66,11 @@ export async function onRequestGet({ request, env }) {
       // Agregar itemsCount
       const statItems = safe(stat.itemsCount);
       for (const [name, qty] of Object.entries(statItems)) {
-        itemsCount[name] = (itemsCount[name] || 0) + asNumber(qty);
+        const cleanName = String(name || '')
+          .replace(/ - \d+\s*x\s*/gi, ' - ')
+          .replace(/^\d+\s*x\s*/gi, '')
+          .trim();
+        itemsCount[cleanName] = (itemsCount[cleanName] || 0) + asNumber(qty);
       }
 
       // Agregar paidByMethod
@@ -149,7 +153,12 @@ export async function onRequestGet({ request, env }) {
         ordersGrowth,
         daysWithData,
       }),
-      { headers: { "content-type": "application/json; charset=utf-8" } }
+      {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+        },
+      }
     );
   } catch (e) {
     return new Response(
@@ -157,7 +166,12 @@ export async function onRequestGet({ request, env }) {
         error: true,
         details: e?.message ?? String(e),
       }),
-      { headers: { "content-type": "application/json; charset=utf-8" } }
+      {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+        },
+      }
     );
   }
 }
