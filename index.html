@@ -651,6 +651,7 @@
       <div class="card">
         <h3 style="margin: 0.2rem 0">Listado de Pedidos</h3>
         <div id="ordersListContainer" class="orders-list-container"></div>
+        <nav id="ordersPagination" class="orders-pagination" aria-label="Paginación de pedidos" hidden></nav>
       </div>
 
 
@@ -681,6 +682,7 @@
     const ordersListContainer = document.getElementById(
       "ordersListContainer"
     );
+    const ordersPagination = document.getElementById("ordersPagination");
     const transferModalOverlay = document.getElementById("transferModalOverlay");
     const transferModalClose = document.getElementById("transferModalClose");
     const mTransferDelivery = document.getElementById("mTransferDelivery");
@@ -1944,11 +1946,47 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
     }
 
     let lastOrdersDetail = [];
-    function renderOrdersList(orders = []) {
+    let currentOrdersPage = 1;
+    const ORDERS_PER_PAGE = 10;
+
+    function renderOrdersPagination({ page = 1, totalPages = 1, totalItems = 0 } = {}) {
+      if (!ordersPagination) return;
+      const safePage = Math.max(1, Number(page) || 1);
+      const safeTotalPages = Math.max(1, Number(totalPages) || 1);
+      const safeTotalItems = Math.max(0, Number(totalItems) || 0);
+      ordersPagination.hidden = safeTotalItems <= ORDERS_PER_PAGE;
+      ordersPagination.innerHTML = "";
+      if (ordersPagination.hidden) return;
+
+      const createButton = (label, targetPage, disabled, ariaLabel) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "orders-page-btn";
+        button.textContent = label;
+        button.disabled = disabled;
+        button.setAttribute("aria-label", ariaLabel);
+        button.addEventListener("click", () => loadData(targetPage));
+        return button;
+      };
+
+      ordersPagination.append(
+        createButton("Anterior", safePage - 1, safePage === 1, "Ver pedidos anteriores")
+      );
+      const status = document.createElement("span");
+      status.className = "orders-page-status";
+      status.textContent = `Página ${safePage} de ${safeTotalPages} · ${safeTotalItems} pedidos`;
+      ordersPagination.append(status);
+      ordersPagination.append(
+        createButton("Siguiente", safePage + 1, safePage === safeTotalPages, "Ver más pedidos")
+      );
+    }
+
+    function renderOrdersList(orders = [], pagination = {}) {
       ordersListContainer.innerHTML = "";
       if (!orders || orders.length === 0) {
         ordersListContainer.innerHTML =
           '<span class="subtitle">No hay pedidos para este día.</span>';
+        renderOrdersPagination();
         return;
       }
       lastOrdersDetail = orders;
@@ -2032,10 +2070,11 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
 
         ordersListContainer.appendChild(orderEl);
       }
+      renderOrdersPagination(pagination);
     }
 
 
-    async function fetchDailyFromPB(dateKey) {
+    async function fetchDailyFromPB(dateKey, ordersPage = 1) {
       let dailyRecord = null;
       try {
         const filter = encodeURIComponent(`day="${dateKey}"`);
@@ -2063,12 +2102,18 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       }
 
       let orders_detail = [];
+      let orderPaginationInfo = { page: ordersPage, totalPages: 1, totalItems: 0 };
       try {
         const filter = encodeURIComponent(`businessDate="${dateKey}"`);
-        const res = await fetch(`${PB_URL}/api/collections/orders/records?filter=${filter}&sort=-created&perPage=500`);
+        const res = await fetch(`${PB_URL}/api/collections/orders/records?filter=${filter}&sort=-created&perPage=${ORDERS_PER_PAGE}&page=${ordersPage}`);
         if (res.ok) {
           const json = await res.json();
           orders_detail = json.items || [];
+          orderPaginationInfo = {
+            page: json.page || ordersPage,
+            totalPages: json.totalPages || 1,
+            totalItems: json.totalItems || 0,
+          };
         }
       } catch (err) {
         console.warn("Error fetching orders from PB:", err);
@@ -2088,6 +2133,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         ordersByMode: safe(dailyRecord.ordersByMode),
         deliveryByAddress: safe(dailyRecord.deliveryByAddress),
         orders_detail,
+        ordersPagination: orderPaginationInfo,
       };
     }
 
@@ -2418,10 +2464,12 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       };
     }
 
-    async function loadData() {
+    async function loadData(ordersPage = 1) {
       elErr.textContent = "";
       dayList.innerHTML = "";
       ordersListContainer.innerHTML = "";
+      if (ordersPagination) ordersPagination.hidden = true;
+      currentOrdersPage = Math.max(1, Number(ordersPage) || 1);
 
       const day = document.getElementById("day").value;
       if (!day) {
@@ -2432,7 +2480,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
       try {
         let data = null;
       try {
-        const url = (API_BASE ? API_BASE : "") + "/api/daily?day=" + day;
+        const url = (API_BASE ? API_BASE : "") + "/api/daily?day=" + encodeURIComponent(day) + "&ordersPage=" + currentOrdersPage;
         const res = await fetch(url);
         if (res.ok) {
           data = await res.json();
@@ -2443,7 +2491,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
 
       if (!data) {
         try {
-          data = await fetchDailyFromPB(day);
+          data = await fetchDailyFromPB(day, currentOrdersPage);
         } catch (pbErr) {
           console.error("Error al consultar PocketBase:", pbErr);
         }
@@ -2531,11 +2579,12 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
         if (wTotal) {
           wTotal.textContent = `$${finalRevenue.toLocaleString("es-AR")}`;
         }
+        const transferTotals = data.transferTotals || {};
         if (mTransferDelivery) {
-          mTransferDelivery.textContent = `$${transferDelivery.toLocaleString("es-AR")}`;
+          mTransferDelivery.textContent = `$${Number(transferTotals.delivery ?? transferDelivery).toLocaleString("es-AR")}`;
         }
         if (mTransferRetiro) {
-          mTransferRetiro.textContent = `$${transferRetiro.toLocaleString("es-AR")}`;
+          mTransferRetiro.textContent = `$${Number(transferTotals.retiro ?? transferRetiro).toLocaleString("es-AR")}`;
         }
 
 
@@ -2547,7 +2596,7 @@ if (cashBtn) cashBtn.addEventListener("click", openCash);
 
         lastItemsCount = data.itemsCount || {};
         renderTopItemsRow(lastItemsCount, 20);
-        renderOrdersList(data.orders_detail);
+        renderOrdersList(data.orders_detail, data.ordersPagination);
 
       } catch (err) {
         elErr.textContent = "Error: " + (err?.message || err);

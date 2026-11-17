@@ -408,6 +408,40 @@ details[open] summary .chev {
   margin-right: auto;
 }
 
+.orders-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  margin: .8rem auto 0;
+  max-width: 96%;
+  color: var(--pixel-text-soft);
+  font-size: .82rem;
+}
+
+.orders-page-btn {
+  border: 1px solid var(--pixel-border);
+  border-radius: 7px;
+  background: rgba(var(--pixel-bg-rgb), .6);
+  color: var(--pixel-text);
+  cursor: pointer;
+  font: inherit;
+  padding: .35rem .6rem;
+}
+
+.orders-page-btn:hover:not(:disabled) {
+  border-color: var(--pixel-accent);
+}
+
+.orders-page-btn:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.orders-page-status {
+  text-align: center;
+}
+
 /* =============== MODAL =============== */
 .modal-overlay {
   position: fixed;
